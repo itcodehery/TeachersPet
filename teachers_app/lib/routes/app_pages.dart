@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'app_routes.dart';
 
 
+import 'package:teachers_app/features/form_builder/form_builder_screen.dart';
+import 'package:teachers_app/features/home/saved_forms_screen.dart';
+
 final router = GoRouter(
   initialLocation: '/home',
   navigatorKey: GlobalNavigation.instance.navigatorKey,
@@ -13,8 +16,16 @@ final router = GoRouter(
       path: Routes.home,
       builder: (context, state) => const HomePage(),
     ),
-
-
+    GoRoute(
+      name: Names.formBuilder,
+      path: Routes.formBuilder,
+      builder: (context, state) => const FormBuilderScreen(),
+    ),
+    GoRoute(
+      name: Names.savedForms,
+      path: Routes.savedForms,
+      builder: (context, state) => const SavedFormsScreen(),
+    ),
   ],
 );
 

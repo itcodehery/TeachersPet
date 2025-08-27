@@ -1,10 +1,13 @@
+
 enum QuestionType {
   shortAnswer,
   longAnswer,
   multipleChoice,
   matchTheFollowing,
   sectionDivider,
+  groupedQuestions,
 }
+
 
 class Question {
   final String id;
@@ -13,6 +16,7 @@ class Question {
   final List<String>? options; // For MCQ, Match the Following
   final int? marks; // For section divider
   final String? sectionTitle; // For section divider
+  final List<Question>? subQuestions; // For groupedQuestions
 
   Question({
     required this.id,
@@ -21,5 +25,6 @@ class Question {
     this.options,
     this.marks,
     this.sectionTitle,
+    this.subQuestions,
   });
 }
