@@ -82,6 +82,7 @@ class _AddQuestionDialogState extends State<AddQuestionDialog> {
             ),
           ],
         ),
+        const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           children: _subQuestions
@@ -223,129 +224,211 @@ class _AddQuestionDialogState extends State<AddQuestionDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        _type == QuestionType.sectionDivider
-            ? 'Add Section Divider'
-            : _type == QuestionType.matchTheFollowing
-            ? 'Add Match the Following'
-            : _type == QuestionType.groupedQuestions
-            ? 'Add Grouped Question'
-            : 'Add Question',
-      ),
-      content: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.limeAccent, width: 1.5),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              DropdownButtonFormField<QuestionType>(
-                initialValue: _type,
-                decoration: const InputDecoration(labelText: 'Question Type'),
-                items: QuestionType.values
-                    .map(
-                      (type) => DropdownMenuItem(
-                        value: type,
-                        child: Text(getTypeNameFromQuestion(type)),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (type) =>
-                    setState(() => _type = type ?? QuestionType.shortAnswer),
+              Container(
+                width: double.infinity,
+                color: Colors.limeAccent.withOpacity(0.1),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 16,
+                ),
+                child: Text(
+                  _type == QuestionType.sectionDivider
+                      ? 'Add Section Divider'
+                      : _type == QuestionType.matchTheFollowing
+                      ? 'Add Match the Following'
+                      : _type == QuestionType.groupedQuestions
+                      ? 'Add Grouped Question'
+                      : 'Add Question',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.lime,
+                  ),
+                ),
               ),
-              const SizedBox(height: 16),
-              if (_type == QuestionType.groupedQuestions)
-                TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Main Question Title (optional)',
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        DropdownButtonFormField<QuestionType>(
+                          initialValue: _type,
+                          decoration: const InputDecoration(
+                            labelText: 'Question Type',
+                          ),
+                          items: QuestionType.values
+                              .map(
+                                (type) => DropdownMenuItem(
+                                  value: type,
+                                  child: Text(getTypeNameFromQuestion(type)),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (type) => setState(
+                            () => _type = type ?? QuestionType.shortAnswer,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (_type == QuestionType.groupedQuestions)
+                          TextFormField(
+                            decoration: const InputDecoration(
+                              labelText: 'Main Question Title (optional)',
+                            ),
+                            onChanged: (val) => setState(() => _title = val),
+                          ),
+                        if (_type == QuestionType.groupedQuestions)
+                          _buildSubQuestionsInput(),
+                        if (_type != QuestionType.sectionDivider &&
+                            _type != QuestionType.matchTheFollowing &&
+                            _type != QuestionType.groupedQuestions)
+                          TextFormField(
+                            decoration: const InputDecoration(
+                              labelText: 'Question Title',
+                            ),
+                            validator: (val) =>
+                                val == null || val.trim().isEmpty
+                                ? 'Required'
+                                : null,
+                            onChanged: (val) => setState(() => _title = val),
+                          ),
+                        if (_type == QuestionType.multipleChoice)
+                          _buildOptionsInput(),
+                        if (_type == QuestionType.matchTheFollowing)
+                          _buildPairsInput(),
+                        if (_type == QuestionType.sectionDivider)
+                          TextFormField(
+                            decoration: const InputDecoration(
+                              labelText: 'Section Title',
+                            ),
+                            validator: (val) =>
+                                val == null || val.trim().isEmpty
+                                ? 'Required'
+                                : null,
+                            onChanged: (val) =>
+                                setState(() => _sectionTitle = val),
+                          ),
+                        if (_type == QuestionType.sectionDivider)
+                          TextFormField(
+                            decoration: const InputDecoration(
+                              labelText: 'Marks',
+                            ),
+                            keyboardType: TextInputType.number,
+                            validator: (val) =>
+                                val == null || val.trim().isEmpty
+                                ? 'Required'
+                                : null,
+                            onChanged: (val) =>
+                                setState(() => _marks = int.tryParse(val)),
+                          ),
+                      ],
+                    ),
                   ),
-                  onChanged: (val) => setState(() => _title = val),
                 ),
-              if (_type == QuestionType.groupedQuestions)
-                _buildSubQuestionsInput(),
-              if (_type != QuestionType.sectionDivider &&
-                  _type != QuestionType.matchTheFollowing &&
-                  _type != QuestionType.groupedQuestions)
-                TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Question Title',
-                  ),
-                  validator: (val) =>
-                      val == null || val.trim().isEmpty ? 'Required' : null,
-                  onChanged: (val) => setState(() => _title = val),
+              ),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
-              if (_type == QuestionType.multipleChoice) _buildOptionsInput(),
-              if (_type == QuestionType.matchTheFollowing) _buildPairsInput(),
-              if (_type == QuestionType.sectionDivider)
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Section Title'),
-                  validator: (val) =>
-                      val == null || val.trim().isEmpty ? 'Required' : null,
-                  onChanged: (val) => setState(() => _sectionTitle = val),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => context.pop(),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.lime,
+                        foregroundColor: Colors.black87,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                      ),
+                      // Inside _AddQuestionDialogState.build, within the ElevatedButton onPressed callback
+                      onPressed: () {
+                        if (_formKey.currentState?.validate() ?? false) {
+                          final question = Question(
+                            id:
+                                _editingId ??
+                                DateTime.now().millisecondsSinceEpoch
+                                    .toString(),
+                            title: _type == QuestionType.sectionDivider
+                                ? _sectionTitle ?? ''
+                                : _title ?? '',
+                            type: _type,
+                            options: _type == QuestionType.multipleChoice
+                                ? _options
+                                : _type == QuestionType.matchTheFollowing
+                                ? _pairs
+                                      .map((e) => '${e.key}=${e.value}')
+                                      .toList()
+                                : null,
+                            marks: _type == QuestionType.sectionDivider
+                                ? _marks
+                                : null,
+                            sectionTitle: _type == QuestionType.sectionDivider
+                                ? _sectionTitle
+                                : null,
+                            subQuestions: _type == QuestionType.groupedQuestions
+                                ? _subQuestions
+                                      .map(
+                                        (subQ) => Question(
+                                          id: DateTime.now()
+                                              .millisecondsSinceEpoch
+                                              .toString(),
+                                          title: subQ,
+                                          type: QuestionType.shortAnswer,
+                                        ),
+                                      )
+                                      .toList()
+                                : null,
+                          );
+
+                          // IMPORTANT:
+                          // This is the correct way to get the context from the parent widget
+                          // that created the dialog and has access to the bloc.
+                          if (widget.initialQuestion != null) {
+                            context.read<FormBuilderBloc>().add(
+                              UpdateField(question),
+                            );
+                          } else {
+                            context.read<FormBuilderBloc>().add(
+                              AddField(question),
+                            );
+                          }
+
+                          context.pop(); // Dismiss the dialog
+                        }
+                      },
+
+                      child: const Text('Add'),
+                    ),
+                  ],
                 ),
-              if (_type == QuestionType.sectionDivider)
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Marks'),
-                  keyboardType: TextInputType.number,
-                  validator: (val) =>
-                      val == null || val.trim().isEmpty ? 'Required' : null,
-                  onChanged: (val) =>
-                      setState(() => _marks = int.tryParse(val)),
-                ),
+              ),
             ],
           ),
         ),
       ),
-      actions: [
-        TextButton(onPressed: () => context.pop(), child: const Text('Cancel')),
-        ElevatedButton(
-          onPressed: () {
-            if (_formKey.currentState?.validate() ?? false) {
-              final question = Question(
-                id:
-                    _editingId ??
-                    DateTime.now().millisecondsSinceEpoch.toString(),
-                title: _type == QuestionType.sectionDivider
-                    ? ''
-                    : _type == QuestionType.matchTheFollowing
-                    ? ''
-                    : _type == QuestionType.groupedQuestions
-                    ? (_title?.trim().isNotEmpty == true ? _title!.trim() : '')
-                    : _title ?? '',
-                type: _type,
-                options: _type == QuestionType.multipleChoice
-                    ? _options
-                    : _type == QuestionType.matchTheFollowing
-                    ? _pairs.map((e) => '${e.key}=${e.value}').toList()
-                    : null,
-                marks: _type == QuestionType.sectionDivider ? _marks : null,
-                sectionTitle: _type == QuestionType.sectionDivider
-                    ? _sectionTitle
-                    : null,
-                subQuestions: _type == QuestionType.groupedQuestions
-                    ? _subQuestions
-                          .map(
-                            (subQ) => Question(
-                              id: DateTime.now().millisecondsSinceEpoch
-                                  .toString(),
-                              title: subQ,
-                              type: QuestionType.shortAnswer,
-                            ),
-                          )
-                          .toList()
-                    : null,
-              );
-              if (_editingId != null) {
-                context.read<FormBuilderBloc>().add(UpdateField(question));
-              } else {
-                context.read<FormBuilderBloc>().add(AddField(question));
-              }
-              context.pop();
-            }
-          },
-          child: const Text('Add'),
-        ),
-      ],
     );
   }
 }

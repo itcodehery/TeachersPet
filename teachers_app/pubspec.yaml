@@ -23,6 +23,7 @@ dependencies:
   flutter_form_builder: ^10.2.0
   form_builder_validators: ^11.2.0
   reorderables: ^0.6.0
+  split_button: ^0.1.0
 
 dev_dependencies:
   flutter_test:
@@ -33,3 +34,18 @@ flutter:
   uses-material-design: true
   assets:
     - assets/template.docx
+  fonts:
+    - family: AnonymicePro
+      fonts:
+        - asset: assets/AnonymiceProNerdFontMono-Regular.ttf
+        - asset: assets/AnonymiceProNerdFontMono-Bold.ttf
+          weight: 700
+        - asset: assets/AnonymiceProNerdFontMono-Italic.ttf
+          style: italic
+    - family: Outfit
+      fonts:
+        - asset: assets/Outfit-Regular.otf
+        - asset: assets/Outfit-Bold.otf
+          weight: 700
+        - asset: assets/Outfit-Light.otf
+          weight: 300

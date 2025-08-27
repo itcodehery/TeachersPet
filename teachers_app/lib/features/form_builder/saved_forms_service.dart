@@ -1,0 +1,68 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import '../form_builder/question_model.dart';
+
+class SavedForm {
+  final String id;
+  final String title;
+  final DateTime lastModified;
+  final List<Question> questions;
+
+  SavedForm({
+    required this.id,
+    required this.title,
+    required this.lastModified,
+    required this.questions,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'lastModified': lastModified.toIso8601String(),
+    'questions': questions.map((q) => q.toJson()).toList(),
+  };
+
+  factory SavedForm.fromJson(Map<String, dynamic> json) => SavedForm(
+    id: json['id'],
+    title: json['title'],
+    lastModified: DateTime.parse(json['lastModified']),
+    questions: (json['questions'] as List)
+        .map((q) => Question.fromJson(q))
+        .toList(),
+  );
+}
+
+class SavedFormsService {
+  static Future<File> _getFile() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return File('${dir.path}/forms.json');
+  }
+
+  static Future<List<SavedForm>> loadForms() async {
+    final file = await _getFile();
+    if (!await file.exists()) return [];
+    final content = await file.readAsString();
+    final data = jsonDecode(content) as List;
+    return data.map((f) => SavedForm.fromJson(f)).toList();
+  }
+
+  static Future<void> saveForms(List<SavedForm> forms) async {
+    final file = await _getFile();
+    final content = jsonEncode(forms.map((f) => f.toJson()).toList());
+    await file.writeAsString(content);
+  }
+
+  static Future<void> addForm(SavedForm form) async {
+    final forms = await loadForms();
+    forms.removeWhere((f) => f.id == form.id);
+    forms.add(form);
+    await saveForms(forms);
+  }
+
+  static Future<void> deleteForm(String id) async {
+    final forms = await loadForms();
+    forms.removeWhere((f) => f.id == id);
+    await saveForms(forms);
+  }
+}

@@ -450,6 +450,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.10.1"
+  split_button:
+    dependency: "direct main"
+    description:
+      name: split_button
+      sha256: ae1e4cf1b6f1a996642efb64282fda78a2b085aa87dfe93224775f73b45183d5
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
   sprintf:
     dependency: transitive
     description:
