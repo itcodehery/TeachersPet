@@ -1,9 +1,9 @@
 # TeachersPet
 
-TeachersPet is a Flutter app for building custom forms (like Google Forms) and generating Word documents from user responses.
+TeachersPet is a Flutter app for building custom question papers with drag-and-drop components for various question types.
 
 ## Features
-- Dynamic form builder UI
+- Drag-and-drop question paper builder
 - Multiple question types: Short/Long Answer, MCQ, Match the Following, Section Divider
 - Word document generation (using docx_template)
 - Planned: PDF export, sharing, advanced formatting
