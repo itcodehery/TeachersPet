@@ -64,6 +64,8 @@ class HomeScreen extends StatelessWidget {
           center: AlignmentGeometry.bottomRight,
           stops: [0.0, 1.0],
         ),
+        borderRadius: BorderRadiusGeometry.circular(12),
+        border: BoxBorder.all(color: Colors.lime.withAlpha(40), width: 1),
       ),
       child: InkWell(
         onTap: onTap,

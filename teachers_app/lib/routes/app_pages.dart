@@ -2,8 +2,7 @@ import 'package:teachers_app/features/home/presentation/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'app_routes.dart';
-
-
+import 'package:teachers_app/features/form_builder/saved_forms_service.dart';
 import 'package:teachers_app/features/form_builder/form_builder_screen.dart';
 import 'package:teachers_app/features/home/saved_forms_screen.dart';
 
@@ -19,7 +18,10 @@ final router = GoRouter(
     GoRoute(
       name: Names.formBuilder,
       path: Routes.formBuilder,
-      builder: (context, state) => const FormBuilderScreen(),
+      builder: (context, state) {
+        final form = state.extra as SavedForm?;
+        return FormBuilderScreen(form: form);
+      },
     ),
     GoRoute(
       name: Names.savedForms,
@@ -35,4 +37,3 @@ class GlobalNavigation {
 
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 }
-

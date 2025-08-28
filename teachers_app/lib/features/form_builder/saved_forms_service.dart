@@ -5,32 +5,52 @@ import '../form_builder/question_model.dart';
 
 class SavedForm {
   final String id;
-  final String title;
+  final String name;
+  final DateTime createdOn;
   final DateTime lastModified;
   final List<Question> questions;
 
   SavedForm({
     required this.id,
-    required this.title,
+    required this.name,
+    required this.createdOn,
     required this.lastModified,
     required this.questions,
   });
 
+  SavedForm copyWith({
+    String? id,
+    String? name,
+    DateTime? createdOn,
+    DateTime? lastModified,
+    List<Question>? questions,
+  }) {
+    return SavedForm(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      createdOn: createdOn ?? this.createdOn,
+      lastModified: lastModified ?? this.lastModified,
+      questions: questions ?? this.questions,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'lastModified': lastModified.toIso8601String(),
-    'questions': questions.map((q) => q.toJson()).toList(),
-  };
+        'id': id,
+        'name': name,
+        'createdOn': createdOn.toIso8601String(),
+        'lastModified': lastModified.toIso8601String(),
+        'questions': questions.map((q) => q.toJson()).toList(),
+      };
 
   factory SavedForm.fromJson(Map<String, dynamic> json) => SavedForm(
-    id: json['id'],
-    title: json['title'],
-    lastModified: DateTime.parse(json['lastModified']),
-    questions: (json['questions'] as List)
-        .map((q) => Question.fromJson(q))
-        .toList(),
-  );
+        id: json['id'],
+        name: json['name'],
+        createdOn: DateTime.parse(json['createdOn']),
+        lastModified: DateTime.parse(json['lastModified']),
+        questions: (json['questions'] as List)
+            .map((q) => Question.fromJson(q))
+            .toList(),
+      );
 }
 
 class SavedFormsService {

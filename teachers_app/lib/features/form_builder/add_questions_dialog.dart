@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:teachers_app/features/form_builder/form_builder_event.dart';
 import './question_model.dart';
-import './form_builder_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'form_builder_provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 // AddQuestionDialog and its state class
-class AddQuestionDialog extends StatefulWidget {
+class AddQuestionDialog extends ConsumerStatefulWidget {
   final Question? initialQuestion;
   const AddQuestionDialog({super.key, this.initialQuestion});
 
   @override
-  State<AddQuestionDialog> createState() => _AddQuestionDialogState();
+  ConsumerState<AddQuestionDialog> createState() => _AddQuestionDialogState();
 }
 
-class _AddQuestionDialogState extends State<AddQuestionDialog> {
+class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
   final _formKey = GlobalKey<FormState>();
   String? _title;
   QuestionType _type = QuestionType.shortAnswer;
@@ -403,17 +402,14 @@ class _AddQuestionDialogState extends State<AddQuestionDialog> {
                                 : null,
                           );
 
-                          // IMPORTANT:
-                          // This is the correct way to get the context from the parent widget
-                          // that created the dialog and has access to the bloc.
                           if (widget.initialQuestion != null) {
-                            context.read<FormBuilderBloc>().add(
-                              UpdateField(question),
-                            );
+                            ref
+                                .read(formBuilderProvider.notifier)
+                                .updateQuestion(question);
                           } else {
-                            context.read<FormBuilderBloc>().add(
-                              AddField(question),
-                            );
+                            ref
+                                .read(formBuilderProvider.notifier)
+                                .addQuestion(question);
                           }
 
                           context.pop(); // Dismiss the dialog
