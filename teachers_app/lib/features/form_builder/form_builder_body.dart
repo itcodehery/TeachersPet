@@ -29,6 +29,12 @@ class _FormBuilderBodyState extends ConsumerState<FormBuilderBody> {
         return 'Section Divider';
       case QuestionType.groupedQuestions:
         return 'Grouped Question';
+      case QuestionType.fillInTheBlanks:
+        return 'Fill in the Blanks';
+      case QuestionType.questionWithImage:
+        return 'Question with Image';
+      case QuestionType.groupedQuestionWithImage:
+        return 'Grouped Question with Image';
     }
   }
 

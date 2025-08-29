@@ -1,10 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import './question_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'form_builder_provider.dart';
 import 'package:go_router/go_router.dart';
 
-// AddQuestionDialog and its state class
 class AddQuestionDialog extends ConsumerStatefulWidget {
   final Question? initialQuestion;
   const AddQuestionDialog({super.key, this.initialQuestion});
@@ -19,16 +20,15 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
   QuestionType _type = QuestionType.shortAnswer;
   List<String> _options = [];
   String _optionInput = '';
-  // For match the following
   List<MapEntry<String, String>> _pairs = [];
   String _pairKey = '';
   String _pairValue = '';
-  int? _marks;
+  String? _marks;
   String? _sectionTitle;
-
   List<String> _subQuestions = [];
   String _subQuestionInput = '';
   String? _editingId;
+  List<String> _imagePaths = [];
 
   @override
   void initState() {
@@ -41,16 +41,81 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
       _options = q.options ?? [];
       _marks = q.marks;
       _sectionTitle = q.sectionTitle;
+      _imagePaths = q.imagePaths ?? [];
       if (q.type == QuestionType.matchTheFollowing && q.options != null) {
         _pairs = q.options!.map((e) {
           final parts = e.split('=');
           return MapEntry(parts[0], parts.length > 1 ? parts[1] : '');
         }).toList();
       }
-      if (q.type == QuestionType.groupedQuestions && q.subQuestions != null) {
+      if ((q.type == QuestionType.groupedQuestions ||
+              q.type == QuestionType.groupedQuestionWithImage) &&
+          q.subQuestions != null) {
         _subQuestions = q.subQuestions!.map((sq) => sq.title).toList();
       }
     }
+  }
+
+  Future<void> _pickImages() async {
+    final picker = ImagePicker();
+    final pickedFiles = await picker.pickMultiImage();
+    if (pickedFiles.isNotEmpty) {
+      setState(() {
+        _imagePaths.addAll(pickedFiles.map((file) => file.path));
+      });
+    }
+  }
+
+  Widget _buildImagePreviews() {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _imagePaths.map((path) {
+        return Stack(
+          children: [
+            Image.file(
+              File(path),
+              width: 100,
+              height: 100,
+              fit: BoxFit.cover,
+            ),
+            Positioned(
+              top: 0,
+              right: 0,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _imagePaths.remove(path);
+                  });
+                },
+                child: const CircleAvatar(
+                  radius: 12,
+                  backgroundColor: Colors.black54,
+                  child: Icon(Icons.close, color: Colors.white, size: 16),
+                ),
+              ),
+            ),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildImagePicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Images'),
+        const SizedBox(height: 8),
+        ElevatedButton.icon(
+          onPressed: _pickImages,
+          icon: const Icon(Icons.image),
+          label: const Text('Select Images'),
+        ),
+        const SizedBox(height: 8),
+        _buildImagePreviews(),
+      ],
+    );
   }
 
   Widget _buildSubQuestionsInput() {
@@ -173,8 +238,7 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: () {
-                if (_pairKey.trim().isNotEmpty &&
-                    _pairValue.trim().isNotEmpty) {
+                if (_pairKey.trim().isNotEmpty && _pairValue.trim().isNotEmpty) {
                   setState(() {
                     _pairs.add(MapEntry(_pairKey.trim(), _pairValue.trim()));
                     _pairKey = '';
@@ -218,6 +282,12 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
         return 'Section Divider';
       case QuestionType.groupedQuestions:
         return 'Grouped Question';
+      case QuestionType.fillInTheBlanks:
+        return 'Fill in the Blanks';
+      case QuestionType.questionWithImage:
+        return 'Question with Image';
+      case QuestionType.groupedQuestionWithImage:
+        return 'Grouped Question with Image';
     }
   }
 
@@ -243,13 +313,7 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
                   horizontal: 16,
                 ),
                 child: Text(
-                  _type == QuestionType.sectionDivider
-                      ? 'Add Section Divider'
-                      : _type == QuestionType.matchTheFollowing
-                      ? 'Add Match the Following'
-                      : _type == QuestionType.groupedQuestions
-                      ? 'Add Grouped Question'
-                      : 'Add Question',
+                  'Add Question',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
@@ -266,7 +330,7 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         DropdownButtonFormField<QuestionType>(
-                          initialValue: _type,
+                          value: _type,
                           decoration: const InputDecoration(
                             labelText: 'Question Type',
                           ),
@@ -283,56 +347,51 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        if (_type == QuestionType.groupedQuestions)
+                        if (_type != QuestionType.sectionDivider)
                           TextFormField(
-                            decoration: const InputDecoration(
-                              labelText: 'Main Question Title (optional)',
+                            initialValue: _title,
+                            decoration: InputDecoration(
+                              labelText: (_type == QuestionType.groupedQuestions ||
+                                      _type == QuestionType.groupedQuestionWithImage)
+                                  ? 'Main Question Title (optional)'
+                                  : 'Question Title',
                             ),
-                            onChanged: (val) => setState(() => _title = val),
-                          ),
-                        if (_type == QuestionType.groupedQuestions)
-                          _buildSubQuestionsInput(),
-                        if (_type != QuestionType.sectionDivider &&
-                            _type != QuestionType.matchTheFollowing &&
-                            _type != QuestionType.groupedQuestions)
-                          TextFormField(
-                            decoration: const InputDecoration(
-                              labelText: 'Question Title',
-                            ),
-                            validator: (val) =>
-                                val == null || val.trim().isEmpty
-                                ? 'Required'
+                            validator: (_type != QuestionType.groupedQuestions &&
+                                    _type != QuestionType.groupedQuestionWithImage)
+                                ? (val) => val == null || val.trim().isEmpty
+                                    ? 'Required'
+                                    : null
                                 : null,
                             onChanged: (val) => setState(() => _title = val),
                           ),
-                        if (_type == QuestionType.multipleChoice)
-                          _buildOptionsInput(),
-                        if (_type == QuestionType.matchTheFollowing)
-                          _buildPairsInput(),
+                        if (_type == QuestionType.multipleChoice) _buildOptionsInput(),
+                        if (_type == QuestionType.matchTheFollowing) _buildPairsInput(),
+                        if (_type == QuestionType.groupedQuestions ||
+                            _type == QuestionType.groupedQuestionWithImage)
+                          _buildSubQuestionsInput(),
+                        if (_type == QuestionType.questionWithImage ||
+                            _type == QuestionType.groupedQuestionWithImage)
+                          _buildImagePicker(),
                         if (_type == QuestionType.sectionDivider)
                           TextFormField(
+                            initialValue: _sectionTitle,
                             decoration: const InputDecoration(
                               labelText: 'Section Title',
                             ),
                             validator: (val) =>
-                                val == null || val.trim().isEmpty
-                                ? 'Required'
-                                : null,
-                            onChanged: (val) =>
-                                setState(() => _sectionTitle = val),
+                                val == null || val.trim().isEmpty ? 'Required' : null,
+                            onChanged: (val) => setState(() => _sectionTitle = val),
                           ),
                         if (_type == QuestionType.sectionDivider)
                           TextFormField(
+                            initialValue: _marks,
                             decoration: const InputDecoration(
                               labelText: 'Marks',
                             ),
-                            keyboardType: TextInputType.number,
                             validator: (val) =>
-                                val == null || val.trim().isEmpty
-                                ? 'Required'
-                                : null,
+                                val == null || val.trim().isEmpty ? 'Required' : null,
                             onChanged: (val) =>
-                                setState(() => _marks = int.tryParse(val)),
+                                setState(() => _marks = val),
                           ),
                       ],
                     ),
@@ -362,14 +421,11 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
                           borderRadius: BorderRadius.circular(100),
                         ),
                       ),
-                      // Inside _AddQuestionDialogState.build, within the ElevatedButton onPressed callback
                       onPressed: () {
                         if (_formKey.currentState?.validate() ?? false) {
                           final question = Question(
-                            id:
-                                _editingId ??
-                                DateTime.now().millisecondsSinceEpoch
-                                    .toString(),
+                            id: _editingId ??
+                                DateTime.now().millisecondsSinceEpoch.toString(),
                             title: _type == QuestionType.sectionDivider
                                 ? _sectionTitle ?? ''
                                 : _title ?? '',
@@ -377,28 +433,26 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
                             options: _type == QuestionType.multipleChoice
                                 ? _options
                                 : _type == QuestionType.matchTheFollowing
-                                ? _pairs
-                                      .map((e) => '${e.key}=${e.value}')
-                                      .toList()
-                                : null,
-                            marks: _type == QuestionType.sectionDivider
-                                ? _marks
-                                : null,
-                            sectionTitle: _type == QuestionType.sectionDivider
-                                ? _sectionTitle
-                                : null,
-                            subQuestions: _type == QuestionType.groupedQuestions
+                                    ? _pairs.map((e) => '${e.key}=${e.value}').toList()
+                                    : null,
+                            marks: _type == QuestionType.sectionDivider ? _marks : null,
+                            sectionTitle:
+                                _type == QuestionType.sectionDivider ? _sectionTitle : null,
+                            subQuestions: (_type == QuestionType.groupedQuestions ||
+                                    _type == QuestionType.groupedQuestionWithImage)
                                 ? _subQuestions
-                                      .map(
-                                        (subQ) => Question(
+                                    .map((subQ) => Question(
                                           id: DateTime.now()
                                               .millisecondsSinceEpoch
                                               .toString(),
                                           title: subQ,
                                           type: QuestionType.shortAnswer,
-                                        ),
-                                      )
-                                      .toList()
+                                        ))
+                                    .toList()
+                                : null,
+                            imagePaths: (_type == QuestionType.questionWithImage ||
+                                    _type == QuestionType.groupedQuestionWithImage)
+                                ? _imagePaths
                                 : null,
                           );
 
@@ -412,10 +466,9 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
                                 .addQuestion(question);
                           }
 
-                          context.pop(); // Dismiss the dialog
+                          context.pop();
                         }
                       },
-
                       child: const Text('Add'),
                     ),
                   ],

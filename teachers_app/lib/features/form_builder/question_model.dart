@@ -5,6 +5,9 @@ enum QuestionType {
   matchTheFollowing,
   sectionDivider,
   groupedQuestions,
+  fillInTheBlanks,
+  questionWithImage,
+  groupedQuestionWithImage,
 }
 
 class Question {
@@ -12,9 +15,10 @@ class Question {
   final String title;
   final QuestionType type;
   final List<String>? options; // For MCQ, Match the Following
-  final int? marks; // For section divider
+  final String? marks; // For section divider
   final String? sectionTitle; // For section divider
   final List<Question>? subQuestions; // For groupedQuestions
+  final List<String>? imagePaths; // For questionWithImage and groupedQuestionWithImage
 
   Question({
     required this.id,
@@ -24,29 +28,32 @@ class Question {
     this.marks,
     this.sectionTitle,
     this.subQuestions,
+    this.imagePaths,
   });
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'type': type.toString().split('.').last,
-    'options': options,
-    'marks': marks,
-    'sectionTitle': sectionTitle,
-    'subQuestions': subQuestions?.map((q) => q.toJson()).toList(),
-  };
+        'id': id,
+        'title': title,
+        'type': type.toString().split('.').last,
+        'options': options,
+        'marks': marks,
+        'sectionTitle': sectionTitle,
+        'subQuestions': subQuestions?.map((q) => q.toJson()).toList(),
+        'imagePaths': imagePaths,
+      };
 
   factory Question.fromJson(Map<String, dynamic> json) => Question(
-    id: json['id'],
-    title: json['title'],
-    type: QuestionTypeExtension.fromString(json['type']),
-    options: (json['options'] as List?)?.map((e) => e as String).toList(),
-    marks: json['marks'],
-    sectionTitle: json['sectionTitle'],
-    subQuestions: (json['subQuestions'] as List?)
-        ?.map((q) => Question.fromJson(q))
-        .toList(),
-  );
+        id: json['id'],
+        title: json['title'],
+        type: QuestionTypeExtension.fromString(json['type']),
+        options: (json['options'] as List?)?.map((e) => e as String).toList(),
+        marks: json['marks'],
+        sectionTitle: json['sectionTitle'],
+        subQuestions: (json['subQuestions'] as List?)
+            ?.map((q) => Question.fromJson(q as Map<String, dynamic>))
+            .toList(),
+        imagePaths: (json['imagePaths'] as List?)?.map((e) => e as String).toList(),
+      );
 }
 
 extension QuestionTypeExtension on QuestionType {
@@ -64,6 +71,12 @@ extension QuestionTypeExtension on QuestionType {
         return QuestionType.sectionDivider;
       case 'groupedQuestions':
         return QuestionType.groupedQuestions;
+      case 'fillInTheBlanks':
+        return QuestionType.fillInTheBlanks;
+      case 'questionWithImage':
+        return QuestionType.questionWithImage;
+      case 'groupedQuestionWithImage':
+        return QuestionType.groupedQuestionWithImage;
       default:
         throw Exception('Unknown QuestionType: $s');
     }

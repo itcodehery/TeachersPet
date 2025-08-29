@@ -7,6 +7,10 @@ import 'package:teachers_app/features/form_builder/add_questions_dialog.dart';
 import 'package:teachers_app/features/form_builder/form_builder_body.dart';
 import 'package:teachers_app/features/form_builder/form_builder_provider.dart';
 import 'package:teachers_app/features/form_builder/saved_forms_service.dart';
+import 'package:teachers_app/features/document_generator/document_generator_bloc.dart';
+import 'package:teachers_app/features/document_generator/document_generator_state.dart';
+import 'package:teachers_app/features/document_generator/pdf_generator.dart';
+import 'package:printing/printing.dart';
 
 class FormBuilderScreen extends ConsumerStatefulWidget {
   final SavedForm? form;
@@ -65,6 +69,22 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
   Widget build(BuildContext context) {
     final form = ref.watch(formBuilderProvider);
 
+    ref.listen(documentGeneratorProvider, (previous, next) {
+      if (next is GeneratingDocument) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Generating document...')));
+      } else if (next is DocumentGenerated) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Document generated and shared!')),
+        );
+      } else if (next is GenerationFailed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to generate document: ${next.error}')),
+        );
+      }
+    });
+
     final splitOptionList = {
       'Add Node': (BuildContext context, WidgetRef ref) {
         showDialog(
@@ -72,27 +92,47 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
           builder: (dialogContext) => const AddQuestionDialog(),
         );
       },
-      'Preview': (BuildContext context, WidgetRef ref) {
-        // Handle preview action
+      'Preview': (BuildContext context, WidgetRef ref) async {
+        if (form.questions.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No questions to preview!')),
+          );
+          return;
+        }
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Generating preview...')));
+
+        final pdfBytes = await generateQuestionPaperPdf(form.questions);
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Scaffold(
+              appBar: AppBar(title: const Text('PDF Preview')),
+              body: PdfPreview(build: (format) => pdfBytes),
+            ),
+          ),
+        );
       },
-      'Export': (BuildContext context, WidgetRef ref) {
+      'Export to PDF': (BuildContext context, WidgetRef ref) {
         if (form.questions.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No questions to export!')),
           );
           return;
         }
-        // TODO: Implement document generation and export logic using Riverpod
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Export feature not implemented yet.')),
-        );
+        ref
+            .read(documentGeneratorProvider.notifier)
+            .generateDocument(form.questions);
       },
     };
 
     final splitOptionIcons = {
       'Add Node': Icons.add,
       'Preview': Icons.remove_red_eye,
-      'Export': Icons.file_download,
+      'Export': Icons.download_outlined,
     };
 
     return Scaffold(
@@ -114,7 +154,9 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
                   Text(
                     form.name,
                     style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.bold),
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(width: 4),
                   const Icon(
@@ -137,9 +179,9 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
             icon: const Icon(Icons.save_outlined),
             onPressed: () {
               SavedFormsService.addForm(form).then((_) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Form saved!')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('Form saved!')));
               });
             },
           ),

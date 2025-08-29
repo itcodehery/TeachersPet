@@ -1,5 +1,7 @@
 abstract class DocumentGeneratorState {}
 
+class DocumentInitial extends DocumentGeneratorState {}
+
 class GeneratingDocument extends DocumentGeneratorState {}
 
 class DocumentGenerated extends DocumentGeneratorState {
