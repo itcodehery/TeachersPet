@@ -10,6 +10,28 @@ class QuestionCounter {
   int count = 1;
 }
 
+class MainCounter {
+  int count = 1;
+}
+
+const Map<int, String> romanNumeralsTill15 = {
+  1: 'I',
+  2: 'II',
+  3: 'III',
+  4: 'IV',
+  5: 'V',
+  6: 'VI',
+  7: 'VII',
+  8: 'VIII',
+  9: 'IX',
+  10: 'X',
+  11: 'XI',
+  12: 'XII',
+  13: 'XIII',
+  14: 'XIV',
+  15: 'XV',
+};
+
 Future<Uint8List> generateQuestionPaperPdf(List<Question> questions) async {
   final font = await rootBundle.load('assets/times.ttf');
   final boldFont = await rootBundle.load('assets/timesbd.ttf');
@@ -25,6 +47,7 @@ Future<Uint8List> generateQuestionPaperPdf(List<Question> questions) async {
 
   final pdf = pw.Document(theme: theme);
   final counter = QuestionCounter();
+  final mainCounter = MainCounter();
 
   pdf.addPage(
     pw.MultiPage(
@@ -37,7 +60,7 @@ Future<Uint8List> generateQuestionPaperPdf(List<Question> questions) async {
           textStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 24),
         ),
         pw.SizedBox(height: 20),
-        ...questions.map((q) => _buildQuestionWidget(q, counter)).toList(),
+        ...questions.map((q) => _buildQuestionWidget(q, counter, mainCounter)),
       ],
     ),
   );
@@ -45,7 +68,11 @@ Future<Uint8List> generateQuestionPaperPdf(List<Question> questions) async {
   return pdf.save();
 }
 
-pw.Widget _buildQuestionWidget(Question question, QuestionCounter counter) {
+pw.Widget _buildQuestionWidget(
+  Question question,
+  QuestionCounter counter,
+  MainCounter mainCounter,
+) {
   switch (question.type) {
     case QuestionType.shortAnswer:
     case QuestionType.longAnswer:
@@ -125,17 +152,17 @@ pw.Widget _buildQuestionWidget(Question question, QuestionCounter counter) {
                   padding: const pw.EdgeInsets.symmetric(vertical: 2.0),
                   child: pw.Row(
                     children: [
-                      pw.Expanded(
-                        flex: 2,
-                        child: pw.Text(pair.key),
-                      ),
+                      pw.Expanded(flex: 2, child: pw.Text(pair.key)),
                       pw.Expanded(
                         flex: 1,
                         child: pw.Center(child: pw.Text('-')),
                       ),
                       pw.Expanded(
                         flex: 2,
-                        child: pw.Text(pair.value, textAlign: pw.TextAlign.right),
+                        child: pw.Text(
+                          pair.value,
+                          textAlign: pw.TextAlign.right,
+                        ),
                       ),
                     ],
                   ),
@@ -163,6 +190,36 @@ pw.Widget _buildQuestionWidget(Question question, QuestionCounter counter) {
                     ),
                   ),
                 ),
+                if (question.marks != null)
+                  pw.Text(
+                    '${question.marks}',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      );
+    case QuestionType.mainDivider:
+      final mainText =
+          '${romanNumeralsTill15[mainCounter.count++]}. ${question.title}';
+      return pw.Padding(
+        padding: const pw.EdgeInsets.only(top: 16.0, bottom: 16.0),
+        child: pw.Column(
+          children: [
+            pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                pw.Text(
+                  mainText,
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(
+                    fontWeight: pw.FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+                pw.Spacer(),
+
                 if (question.marks != null)
                   pw.Text(
                     '${question.marks}',

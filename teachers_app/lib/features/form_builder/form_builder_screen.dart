@@ -11,6 +11,7 @@ import 'package:teachers_app/features/document_generator/document_generator_bloc
 import 'package:teachers_app/features/document_generator/document_generator_state.dart';
 import 'package:teachers_app/features/document_generator/pdf_generator.dart';
 import 'package:printing/printing.dart';
+import 'package:teachers_app/widgets/app_snackbar.dart';
 
 class FormBuilderScreen extends ConsumerStatefulWidget {
   final SavedForm? form;
@@ -71,16 +72,13 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
 
     ref.listen(documentGeneratorProvider, (previous, next) {
       if (next is GeneratingDocument) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Generating document...')));
+        AppSnackbar.showInfo(context, 'Generating document...');
       } else if (next is DocumentGenerated) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Document generated and shared!')),
-        );
+        AppSnackbar.showSuccess(context, 'Document generated and shared!');
       } else if (next is GenerationFailed) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to generate document: ${next.error}')),
+        AppSnackbar.showError(
+          context,
+          'Failed to generate document: ${next.error}',
         );
       }
     });
@@ -92,18 +90,22 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
           builder: (dialogContext) => const AddQuestionDialog(),
         );
       },
+      'Export to PDF': (BuildContext context, WidgetRef ref) {
+        if (form.questions.isEmpty) {
+          AppSnackbar.showError(context, 'No questions to export!');
+          return;
+        }
+        ref
+            .read(documentGeneratorProvider.notifier)
+            .generateDocument(form.questions);
+      },
       'Preview': (BuildContext context, WidgetRef ref) async {
         if (form.questions.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No questions to preview!')),
-          );
+          AppSnackbar.showError(context, 'No questions to preview!');
           return;
         }
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Generating preview...')));
-
+        AppSnackbar.showInfo(context, 'Generating preview...');
         final pdfBytes = await generateQuestionPaperPdf(form.questions);
 
         Navigator.push(
@@ -116,80 +118,96 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
           ),
         );
       },
-      'Export to PDF': (BuildContext context, WidgetRef ref) {
-        if (form.questions.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No questions to export!')),
-          );
-          return;
-        }
-        ref
-            .read(documentGeneratorProvider.notifier)
-            .generateDocument(form.questions);
+      'Reset Form': (BuildContext context, WidgetRef ref) {
+        ref.read(formBuilderProvider.notifier).clearQuestions();
+      },
+      'Grammar & Spelling': (BuildContext context, WidgetRef ref) {
+        AppSnackbar.showInfo(context, "Running the Grammar and Spell Check...");
       },
     };
 
     final splitOptionIcons = {
       'Add Node': Icons.add,
       'Preview': Icons.remove_red_eye,
-      'Export': Icons.download_outlined,
+      'Export to PDF': Icons.picture_as_pdf_outlined,
+      'Reset Form': Icons.restore,
+      'Grammar & Spelling': Icons.book_outlined,
     };
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-        title: Column(
+      body: SafeArea(
+        child: Column(
           children: [
-            TextButton(
-              onPressed: () => _showEditNameDialog(context, form.name),
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.lime.withAlpha(25),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    form.name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+            Container(
+              decoration: BoxDecoration(color: Colors.lime.withAlpha(20)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 8.0,
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => context.pop(),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.edit_outlined,
-                    size: 16,
-                    color: Colors.white70,
-                  ),
-                ],
+                    Expanded(
+                      child: Column(
+                        children: [
+                          TextButton(
+                            onPressed: () =>
+                                _showEditNameDialog(context, form.name),
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.lime.withAlpha(25),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  form.name,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.edit_outlined, size: 16),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Last modified: ${DateFormat.yMd().add_jm().format(form.lastModified)}',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.save_outlined),
+                      onPressed: () {
+                        SavedFormsService.addForm(form).then((_) {
+                          if (context.mounted) {
+                            AppSnackbar.showSuccess(
+                              context,
+                              'Form "${form.name}" saved!',
+                            );
+                          }
+                        });
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Last modified: ${DateFormat.yMd().add_jm().format(form.lastModified)}',
-              style: const TextStyle(fontSize: 10, color: Colors.white70),
-            ),
+            const Divider(height: 1),
+            const Expanded(child: FormBuilderBody()),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save_outlined),
-            onPressed: () {
-              SavedFormsService.addForm(form).then((_) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('Form saved!')));
-              });
-            },
-          ),
-        ],
-        centerTitle: true,
-        elevation: 2,
       ),
-      body: const FormBuilderBody(),
       floatingActionButton: SplitButton(
         backgroundColor: Colors.lime,
         foregroundColor: Colors.black,

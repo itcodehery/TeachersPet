@@ -73,12 +73,7 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
       children: _imagePaths.map((path) {
         return Stack(
           children: [
-            Image.file(
-              File(path),
-              width: 100,
-              height: 100,
-              fit: BoxFit.cover,
-            ),
+            Image.file(File(path), width: 100, height: 100, fit: BoxFit.cover),
             Positioned(
               top: 0,
               right: 0,
@@ -238,7 +233,8 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: () {
-                if (_pairKey.trim().isNotEmpty && _pairValue.trim().isNotEmpty) {
+                if (_pairKey.trim().isNotEmpty &&
+                    _pairValue.trim().isNotEmpty) {
                   setState(() {
                     _pairs.add(MapEntry(_pairKey.trim(), _pairValue.trim()));
                     _pairKey = '';
@@ -288,6 +284,8 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
         return 'Question with Image';
       case QuestionType.groupedQuestionWithImage:
         return 'Grouped Question with Image';
+      case QuestionType.mainDivider:
+        return 'Main Divider';
     }
   }
 
@@ -297,7 +295,10 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.limeAccent, width: 1.5),
+          border: Border.all(
+            color: Colors.limeAccent.withAlpha(20),
+            width: 1.5,
+          ),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Padding(
@@ -313,7 +314,7 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
                   horizontal: 16,
                 ),
                 child: Text(
-                  'Add Question',
+                  'Add Node',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
@@ -330,7 +331,7 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         DropdownButtonFormField<QuestionType>(
-                          value: _type,
+                          initialValue: _type,
                           decoration: const InputDecoration(
                             labelText: 'Question Type',
                           ),
@@ -347,25 +348,57 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        if (_type != QuestionType.sectionDivider)
+                        if (_type == QuestionType.mainDivider)
+                          TextFormField(
+                            initialValue: _sectionTitle,
+                            decoration: const InputDecoration(
+                              labelText: 'Main Title',
+                            ),
+                            validator: (val) =>
+                                val == null || val.trim().isEmpty
+                                ? 'Required'
+                                : null,
+                            onChanged: (val) =>
+                                setState(() => _sectionTitle = val),
+                          ),
+                        if (_type == QuestionType.mainDivider)
+                          TextFormField(
+                            initialValue: _marks,
+                            decoration: const InputDecoration(
+                              labelText: 'Marks',
+                            ),
+                            validator: (val) =>
+                                val == null || val.trim().isEmpty
+                                ? 'Required'
+                                : null,
+                            onChanged: (val) => setState(() => _marks = val),
+                          ),
+                        if (_type != QuestionType.sectionDivider &&
+                            _type != QuestionType.mainDivider)
                           TextFormField(
                             initialValue: _title,
                             decoration: InputDecoration(
-                              labelText: (_type == QuestionType.groupedQuestions ||
-                                      _type == QuestionType.groupedQuestionWithImage)
+                              labelText:
+                                  (_type == QuestionType.groupedQuestions ||
+                                      _type ==
+                                          QuestionType.groupedQuestionWithImage)
                                   ? 'Main Question Title (optional)'
                                   : 'Question Title',
                             ),
-                            validator: (_type != QuestionType.groupedQuestions &&
-                                    _type != QuestionType.groupedQuestionWithImage)
+                            validator:
+                                (_type != QuestionType.groupedQuestions &&
+                                    _type !=
+                                        QuestionType.groupedQuestionWithImage)
                                 ? (val) => val == null || val.trim().isEmpty
-                                    ? 'Required'
-                                    : null
+                                      ? 'Required'
+                                      : null
                                 : null,
                             onChanged: (val) => setState(() => _title = val),
                           ),
-                        if (_type == QuestionType.multipleChoice) _buildOptionsInput(),
-                        if (_type == QuestionType.matchTheFollowing) _buildPairsInput(),
+                        if (_type == QuestionType.multipleChoice)
+                          _buildOptionsInput(),
+                        if (_type == QuestionType.matchTheFollowing)
+                          _buildPairsInput(),
                         if (_type == QuestionType.groupedQuestions ||
                             _type == QuestionType.groupedQuestionWithImage)
                           _buildSubQuestionsInput(),
@@ -375,12 +408,17 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
                         if (_type == QuestionType.sectionDivider)
                           TextFormField(
                             initialValue: _sectionTitle,
-                            decoration: const InputDecoration(
-                              labelText: 'Section Title',
+                            decoration: InputDecoration(
+                              labelText: _type == QuestionType.mainDivider
+                                  ? 'Main Title'
+                                  : 'Section Title',
                             ),
                             validator: (val) =>
-                                val == null || val.trim().isEmpty ? 'Required' : null,
-                            onChanged: (val) => setState(() => _sectionTitle = val),
+                                val == null || val.trim().isEmpty
+                                ? 'Required'
+                                : null,
+                            onChanged: (val) =>
+                                setState(() => _sectionTitle = val),
                           ),
                         if (_type == QuestionType.sectionDivider)
                           TextFormField(
@@ -389,9 +427,10 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
                               labelText: 'Marks',
                             ),
                             validator: (val) =>
-                                val == null || val.trim().isEmpty ? 'Required' : null,
-                            onChanged: (val) =>
-                                setState(() => _marks = val),
+                                val == null || val.trim().isEmpty
+                                ? 'Required'
+                                : null,
+                            onChanged: (val) => setState(() => _marks = val),
                           ),
                       ],
                     ),
@@ -424,34 +463,53 @@ class _AddQuestionDialogState extends ConsumerState<AddQuestionDialog> {
                       onPressed: () {
                         if (_formKey.currentState?.validate() ?? false) {
                           final question = Question(
-                            id: _editingId ??
-                                DateTime.now().millisecondsSinceEpoch.toString(),
-                            title: _type == QuestionType.sectionDivider
+                            id:
+                                _editingId ??
+                                DateTime.now().millisecondsSinceEpoch
+                                    .toString(),
+                            title:
+                                (_type == QuestionType.sectionDivider ||
+                                    _type == QuestionType.mainDivider)
                                 ? _sectionTitle ?? ''
                                 : _title ?? '',
                             type: _type,
                             options: _type == QuestionType.multipleChoice
                                 ? _options
                                 : _type == QuestionType.matchTheFollowing
-                                    ? _pairs.map((e) => '${e.key}=${e.value}').toList()
-                                    : null,
-                            marks: _type == QuestionType.sectionDivider ? _marks : null,
+                                ? _pairs
+                                      .map((e) => '${e.key}=${e.value}')
+                                      .toList()
+                                : null,
+                            marks:
+                                (_type == QuestionType.sectionDivider ||
+                                    _type == QuestionType.mainDivider)
+                                ? _marks
+                                : null,
                             sectionTitle:
-                                _type == QuestionType.sectionDivider ? _sectionTitle : null,
-                            subQuestions: (_type == QuestionType.groupedQuestions ||
-                                    _type == QuestionType.groupedQuestionWithImage)
+                                (_type == QuestionType.sectionDivider ||
+                                    _type == QuestionType.mainDivider)
+                                ? _sectionTitle
+                                : null,
+                            subQuestions:
+                                (_type == QuestionType.groupedQuestions ||
+                                    _type ==
+                                        QuestionType.groupedQuestionWithImage)
                                 ? _subQuestions
-                                    .map((subQ) => Question(
+                                      .map(
+                                        (subQ) => Question(
                                           id: DateTime.now()
                                               .millisecondsSinceEpoch
                                               .toString(),
                                           title: subQ,
                                           type: QuestionType.shortAnswer,
-                                        ))
-                                    .toList()
+                                        ),
+                                      )
+                                      .toList()
                                 : null,
-                            imagePaths: (_type == QuestionType.questionWithImage ||
-                                    _type == QuestionType.groupedQuestionWithImage)
+                            imagePaths:
+                                (_type == QuestionType.questionWithImage ||
+                                    _type ==
+                                        QuestionType.groupedQuestionWithImage)
                                 ? _imagePaths
                                 : null,
                           );

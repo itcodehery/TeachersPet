@@ -27,6 +27,7 @@ dependencies:
   pdf: ^3.11.3
   image_picker: ^1.0.7
   printing: ^5.11.1
+  top_snackbar_flutter: ^3.3.0
 
 dev_dependencies:
   flutter_test:

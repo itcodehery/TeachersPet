@@ -35,6 +35,8 @@ class _FormBuilderBodyState extends ConsumerState<FormBuilderBody> {
         return 'Question with Image';
       case QuestionType.groupedQuestionWithImage:
         return 'Grouped Question with Image';
+      case QuestionType.mainDivider:
+        return 'Main Divider';
     }
   }
 
@@ -144,6 +146,22 @@ class _FormBuilderBodyState extends ConsumerState<FormBuilderBody> {
           ],
         );
 
+      case QuestionType.mainDivider:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Divider(height: 16),
+            if (question.marks != null)
+              Text(
+                'Total Marks: ${question.marks}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+          ],
+        );
+
       default:
         return const SizedBox.shrink();
     }
@@ -162,116 +180,179 @@ class _FormBuilderBodyState extends ConsumerState<FormBuilderBody> {
           needsLongPressDraggable: true,
           children: [
             for (int index = 0; index < questions.length; index++)
-              Card(
+              Padding(
                 key: ValueKey(questions[index].id),
-                elevation: 2,
-                margin: const EdgeInsets.only(bottom: 8),
-                shape: RoundedRectangleBorder(
-                  side: BorderSide(
-                    color: questions[index].type == QuestionType.sectionDivider
-                        ? colorScheme.primary
-                        : colorScheme.secondary,
-                    width: 1.2,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
+                padding: EdgeInsets.only(
+                  left:
+                      questions[index].type == QuestionType.sectionDivider ||
+                          questions[index].type == QuestionType.mainDivider
+                      ? 0.0
+                      : 8.0,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+                child: Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(
+                      color:
+                          questions[index].type ==
+                                  QuestionType.sectionDivider ||
+                              questions[index].type == QuestionType.mainDivider
+                          ? colorScheme.primary.withAlpha(140)
+                          : colorScheme.secondary.withAlpha(40),
+                      width: 1.2,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  questions[index].type ==
-                                          QuestionType.sectionDivider
-                                      ? (questions[index].sectionTitle ??
-                                            'Section')
-                                      : questions[index].title,
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color:
-                                            questions[index].type ==
-                                                QuestionType.sectionDivider
-                                            ? colorScheme.primary
-                                            : colorScheme.onSurface,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (questions[index].type ==
+                                      QuestionType.mainDivider)
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "MAIN: ${questions[index].sectionTitle ?? 'Main Title'}",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: colorScheme.primary,
+                                              ),
+                                        ),
+                                        if (questions[index].marks != null)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 2,
+                                            ),
+                                            child: Text(
+                                              '${questions[index].marks} marks',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                    color: colorScheme.primary,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                            ),
+                                          ),
+                                      ],
+                                    )
+                                  else ...[
+                                    Text(
+                                      questions[index].type ==
+                                              QuestionType.sectionDivider
+                                          ? (questions[index].sectionTitle ??
+                                                'Section')
+                                          : questions[index].title,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color:
+                                                questions[index].type ==
+                                                    QuestionType.sectionDivider
+                                                ? colorScheme.primary
+                                                : colorScheme.onSurface,
+                                          ),
+                                    ),
+                                    if (questions[index].type ==
+                                            QuestionType.sectionDivider &&
+                                        questions[index].marks != null)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 2),
+                                        child: Text(
+                                          '${questions[index].marks} marks',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: colorScheme.primary,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                        ),
                                       ),
-                                ),
-                                if (questions[index].type ==
-                                        QuestionType.sectionDivider &&
-                                    questions[index].marks != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 2),
-                                    child: Text(
-                                      '${questions[index].marks} marks',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: colorScheme.primary,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                    if (questions[index].type !=
+                                            QuestionType.sectionDivider &&
+                                        questions[index].type !=
+                                            QuestionType.mainDivider)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 2),
+                                        child: Text(
+                                          _questionTypeLabel(questions[index]),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: colorScheme.secondary,
+                                              ),
+                                        ),
+                                      ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            questions[index].type != QuestionType.shortAnswer &&
+                                    questions[index].type !=
+                                        QuestionType.longAnswer &&
+                                    questions[index].type !=
+                                        QuestionType.fillInTheBlanks
+                                ? IconButton(
+                                    icon: Icon(
+                                      _expandedCards.contains(
+                                            questions[index].id,
+                                          )
+                                          ? Icons.expand_less
+                                          : Icons.expand_more,
+                                      color: colorScheme.secondary,
                                     ),
-                                  ),
-                                if (questions[index].type !=
-                                    QuestionType.sectionDivider)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 2),
-                                    child: Text(
-                                      _questionTypeLabel(questions[index]),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: colorScheme.secondary,
-                                          ),
-                                    ),
-                                  ),
-                              ],
+                                    onPressed: () =>
+                                        _toggleExpansion(questions[index].id),
+                                  )
+                                : Container(),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.edit_outlined,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () =>
+                                  _showEditDialog(context, questions[index]),
                             ),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              _expandedCards.contains(questions[index].id)
-                                  ? Icons.expand_less
-                                  : Icons.expand_more,
-                              color: colorScheme.secondary,
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.redAccent,
+                              ),
+                              onPressed: () {
+                                ref
+                                    .read(formBuilderProvider.notifier)
+                                    .removeQuestion(questions[index].id);
+                              },
                             ),
-                            onPressed: () =>
-                                _toggleExpansion(questions[index].id),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.grey),
-                            onPressed: () =>
-                                _showEditDialog(context, questions[index]),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.delete,
-                              color: Colors.redAccent,
-                            ),
-                            onPressed: () {
-                              ref
-                                  .read(formBuilderProvider.notifier)
-                                  .removeQuestion(questions[index].id);
-                            },
-                          ),
-                        ],
-                      ),
-                      if (_expandedCards.contains(questions[index].id))
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: _buildExpandableContent(questions[index]),
+                          ],
                         ),
-                    ],
+                        if (_expandedCards.contains(questions[index].id))
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: _buildExpandableContent(questions[index]),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),

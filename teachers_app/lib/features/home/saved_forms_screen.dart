@@ -52,18 +52,26 @@ class _SavedFormsScreenState extends ConsumerState<SavedFormsScreen> {
               final form = forms[index];
               return Card(
                 elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadiusGeometry.all(Radius.circular(24)),
+                ),
+                color: Colors.lime.withAlpha(40),
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16),
-                  title: Text(form.name, style: Theme.of(context).textTheme.titleLarge),
+                  title: Text(
+                    form.name,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                   subtitle: Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
-                        'Last modified: ${DateFormat.yMd().add_jm().format(form.lastModified)}'),
+                      'Last modified: ${DateFormat.yMd().add_jm().format(form.lastModified)}',
+                    ),
                   ),
                   onTap: () => context.push(Routes.formBuilder, extra: form),
                   trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.redAccent),
+                    icon: const Icon(Icons.delete, color: Colors.lime),
                     onPressed: () => _deleteForm(form.id),
                   ),
                 ),

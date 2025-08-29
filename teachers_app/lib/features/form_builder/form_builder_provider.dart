@@ -5,15 +5,15 @@ import 'question_model.dart';
 
 class FormBuilderNotifier extends StateNotifier<SavedForm> {
   FormBuilderNotifier()
-      : super(
-          SavedForm(
-            id: const Uuid().v4(),
-            name: 'Untitled Form',
-            createdOn: DateTime.now(),
-            lastModified: DateTime.now(),
-            questions: [],
-          ),
-        );
+    : super(
+        SavedForm(
+          id: const Uuid().v4(),
+          name: 'Untitled Form',
+          createdOn: DateTime.now(),
+          lastModified: DateTime.now(),
+          questions: [],
+        ),
+      );
 
   void loadForm(SavedForm form) {
     state = form;
@@ -37,6 +37,10 @@ class FormBuilderNotifier extends StateNotifier<SavedForm> {
     );
   }
 
+  void clearQuestions() {
+    state = state.copyWith(questions: []);
+  }
+
   void removeQuestion(String id) {
     final newQuestions = state.questions.where((q) => q.id != id).toList();
     state = state.copyWith(
@@ -49,21 +53,15 @@ class FormBuilderNotifier extends StateNotifier<SavedForm> {
     final questions = [...state.questions];
     final item = questions.removeAt(oldIndex);
     questions.insert(newIndex, item);
-    state = state.copyWith(
-      questions: questions,
-      lastModified: DateTime.now(),
-    );
+    state = state.copyWith(questions: questions, lastModified: DateTime.now());
   }
 
   void updateFormName(String name) {
-    state = state.copyWith(
-      name: name,
-      lastModified: DateTime.now(),
-    );
+    state = state.copyWith(name: name, lastModified: DateTime.now());
   }
 }
 
 final formBuilderProvider =
     StateNotifierProvider<FormBuilderNotifier, SavedForm>((ref) {
-  return FormBuilderNotifier();
-});
+      return FormBuilderNotifier();
+    });
