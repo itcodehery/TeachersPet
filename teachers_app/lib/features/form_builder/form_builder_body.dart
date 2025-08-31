@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:reorderables/reorderables.dart';
-import 'package:teachers_app/features/form_builder/add_questions_dialog.dart';
+import 'package:minty/features/form_builder/add_question_sheet.dart';
 import 'form_builder_provider.dart';
 import 'question_model.dart';
 
@@ -37,13 +37,16 @@ class _FormBuilderBodyState extends ConsumerState<FormBuilderBody> {
         return 'Grouped Question with Image';
       case QuestionType.mainDivider:
         return 'Main Divider';
+      case QuestionType.table:
+        return 'Table';
     }
   }
 
-  void _showEditDialog(BuildContext context, Question question) {
-    showDialog(
+  void _showEditSheet(BuildContext context, Question question) {
+    showModalBottomSheet(
       context: context,
-      builder: (dialogContext) => AddQuestionDialog(initialQuestion: question),
+      isScrollControlled: true,
+      builder: (context) => AddQuestionSheet(initialQuestion: question),
     );
   }
 
@@ -158,6 +161,33 @@ class _FormBuilderBodyState extends ConsumerState<FormBuilderBody> {
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
+              ),
+          ],
+        );
+
+      case QuestionType.table:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Divider(height: 16),
+            const Text(
+              'Table Data:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            if (question.tableData != null)
+              Table(
+                border: TableBorder.all(color: Colors.white70),
+                children: question.tableData!.map((row) {
+                  return TableRow(
+                    children: row.map((cell) {
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(cell),
+                      );
+                    }).toList(),
+                  );
+                }).toList(),
               ),
           ],
         );
@@ -331,7 +361,7 @@ class _FormBuilderBodyState extends ConsumerState<FormBuilderBody> {
                                 color: Colors.grey,
                               ),
                               onPressed: () =>
-                                  _showEditDialog(context, questions[index]),
+                                  _showEditSheet(context, questions[index]),
                             ),
                             IconButton(
                               icon: const Icon(

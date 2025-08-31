@@ -1,10 +1,10 @@
-import 'package:teachers_app/features/home/presentation/pages/home_page.dart';
+import 'package:minty/features/home/presentation/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'app_routes.dart';
-import 'package:teachers_app/features/form_builder/saved_forms_service.dart';
-import 'package:teachers_app/features/form_builder/form_builder_screen.dart';
-import 'package:teachers_app/features/home/saved_forms_screen.dart';
+import 'package:minty/features/form_builder/saved_forms_service.dart';
+import 'package:minty/features/form_builder/form_builder_screen.dart';
+import 'package:minty/features/home/saved_forms_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/home',

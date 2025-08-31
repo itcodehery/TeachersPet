@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:teachers_app/features/form_builder/saved_forms_service.dart';
-import 'package:teachers_app/routes/app_routes.dart';
+import 'package:minty/features/form_builder/saved_forms_service.dart';
+import 'package:minty/routes/app_routes.dart';
 
 class SavedFormsScreen extends ConsumerStatefulWidget {
   const SavedFormsScreen({super.key});
@@ -59,9 +59,18 @@ class _SavedFormsScreenState extends ConsumerState<SavedFormsScreen> {
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16),
-                  title: Text(
-                    form.name,
-                    style: Theme.of(context).textTheme.titleLarge,
+                  title: Row(
+                    children: [
+                      Icon(Icons.file_present),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          form.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                    ],
                   ),
                   subtitle: Padding(
                     padding: const EdgeInsets.only(top: 8.0),

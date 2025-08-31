@@ -3,15 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:split_button/split_button.dart';
-import 'package:teachers_app/features/form_builder/add_questions_dialog.dart';
-import 'package:teachers_app/features/form_builder/form_builder_body.dart';
-import 'package:teachers_app/features/form_builder/form_builder_provider.dart';
-import 'package:teachers_app/features/form_builder/saved_forms_service.dart';
-import 'package:teachers_app/features/document_generator/document_generator_bloc.dart';
-import 'package:teachers_app/features/document_generator/document_generator_state.dart';
-import 'package:teachers_app/features/document_generator/pdf_generator.dart';
+import 'package:minty/features/form_builder/add_question_sheet.dart';
+import 'package:minty/features/form_builder/form_builder_body.dart';
+import 'package:minty/features/form_builder/form_builder_provider.dart';
+import 'package:minty/features/form_builder/saved_forms_service.dart';
+import 'package:minty/features/document_generator/document_generator_bloc.dart';
+import 'package:minty/features/document_generator/document_generator_state.dart';
+import 'package:minty/features/document_generator/pdf_generator.dart';
 import 'package:printing/printing.dart';
-import 'package:teachers_app/widgets/app_snackbar.dart';
+import 'package:minty/widgets/app_snackbar.dart';
 
 class FormBuilderScreen extends ConsumerStatefulWidget {
   final SavedForm? form;
@@ -85,9 +85,10 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
 
     final splitOptionList = {
       'Add Node': (BuildContext context, WidgetRef ref) {
-        showDialog(
+        showModalBottomSheet(
           context: context,
-          builder: (dialogContext) => const AddQuestionDialog(),
+          isScrollControlled: true,
+          builder: (context) => const AddQuestionSheet(),
         );
       },
       'Export to PDF': (BuildContext context, WidgetRef ref) {

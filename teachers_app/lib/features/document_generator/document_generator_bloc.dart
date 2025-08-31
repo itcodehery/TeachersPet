@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:teachers_app/features/document_generator/document_generator_state.dart';
-import 'package:teachers_app/features/form_builder/question_model.dart';
-import 'package:teachers_app/features/document_generator/pdf_generator.dart';
+import 'package:minty/features/document_generator/document_generator_state.dart';
+import 'package:minty/features/form_builder/question_model.dart';
+import 'package:minty/features/document_generator/pdf_generator.dart';
 
 final documentGeneratorProvider =
     StateNotifierProvider<DocumentGeneratorNotifier, DocumentGeneratorState>((

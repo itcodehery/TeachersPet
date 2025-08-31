@@ -1,11 +1,11 @@
 {
-    "name": "teachers_app",
-    "short_name": "teachers_app",
+    "name": "Minty",
+    "short_name": "Minty",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "A fresh take on education.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -1,10 +1,8 @@
 import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:teachers_app/features/form_builder/question_model.dart';
+import 'package:minty/features/form_builder/question_model.dart';
 
 class QuestionCounter {
   int count = 1;
@@ -79,13 +77,14 @@ pw.Widget _buildQuestionWidget(
     case QuestionType.fillInTheBlanks:
       return pw.Padding(
         padding: const pw.EdgeInsets.only(bottom: 8.0),
-        child: pw.Text(
-          '${counter.count++}. ${question.title}',
-          textAlign: pw.TextAlign.justify,
+        child: pw.Row(
+          children: [
+            pw.Text('${counter.count++}. '),
+            _buildTextWithFractions(question.title),
+          ],
         ),
       );
     case QuestionType.multipleChoice:
-      final questionText = '${counter.count++}. ${question.title}';
       final options = question.options ?? [];
       const int maxCharsInLine = 80;
       final totalChars = options.join().length;
@@ -98,7 +97,12 @@ pw.Widget _buildQuestionWidget(
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text(questionText, textAlign: pw.TextAlign.justify),
+              pw.Row(
+                children: [
+                  pw.Text('${counter.count++}. '),
+                  _buildTextWithFractions(question.title),
+                ],
+              ),
               pw.SizedBox(height: 8),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -117,7 +121,12 @@ pw.Widget _buildQuestionWidget(
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text(questionText, textAlign: pw.TextAlign.justify),
+              pw.Row(
+                children: [
+                  pw.Text('${counter.count++}. '),
+                  _buildTextWithFractions(question.title),
+                ],
+              ),
               pw.SizedBox(height: 8),
               pw.GridView(
                 crossAxisCount: 2,
@@ -133,7 +142,6 @@ pw.Widget _buildQuestionWidget(
         );
       }
     case QuestionType.matchTheFollowing:
-      final questionText = '${counter.count++}. ${question.title}';
       final pairs = (question.options ?? []).map((opt) {
         final parts = opt.split('=');
         return MapEntry(parts[0], parts.length > 1 ? parts[1] : '');
@@ -144,7 +152,12 @@ pw.Widget _buildQuestionWidget(
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Text(questionText, textAlign: pw.TextAlign.justify),
+            pw.Row(
+              children: [
+                pw.Text('${counter.count++}. '),
+                _buildTextWithFractions(question.title),
+              ],
+            ),
             pw.SizedBox(height: 8),
             pw.Column(
               children: pairs.map((pair) {
@@ -231,15 +244,16 @@ pw.Widget _buildQuestionWidget(
         ),
       );
     case QuestionType.groupedQuestions:
-      final questionText = '${counter.count++}. ${question.title}';
       return pw.Padding(
         padding: const pw.EdgeInsets.only(bottom: 16.0),
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Text(
-              questionText,
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            pw.Row(
+              children: [
+                pw.Text('${counter.count++}. '),
+                _buildTextWithFractions(question.title),
+              ],
             ),
             pw.Padding(
               padding: const pw.EdgeInsets.only(left: 16.0),
@@ -252,10 +266,7 @@ pw.Widget _buildQuestionWidget(
                       '${String.fromCharCode(97 + entry.key)}. ${entry.value.title}';
                   return pw.Padding(
                     padding: const pw.EdgeInsets.only(bottom: 8.0),
-                    child: pw.Text(
-                      subQuestionText,
-                      textAlign: pw.TextAlign.justify,
-                    ),
+                    child: _buildTextWithFractions(subQuestionText),
                   );
                 }).toList(),
               ),
@@ -264,7 +275,6 @@ pw.Widget _buildQuestionWidget(
         ),
       );
     case QuestionType.questionWithImage:
-      final questionText = '${counter.count++}. ${question.title}';
       List<pw.Widget> imageWidgets = [];
       if (question.imagePaths != null && question.imagePaths!.isNotEmpty) {
         for (var imagePath in question.imagePaths!) {
@@ -283,13 +293,17 @@ pw.Widget _buildQuestionWidget(
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Text(questionText, textAlign: pw.TextAlign.justify),
+            pw.Row(
+              children: [
+                pw.Text('${counter.count++}. '),
+                _buildTextWithFractions(question.title),
+              ],
+            ),
             if (imageWidgets.isNotEmpty) ...imageWidgets,
           ],
         ),
       );
     case QuestionType.groupedQuestionWithImage:
-      final questionText = '${counter.count++}. ${question.title}';
       List<pw.Widget> imageWidgets = [];
       if (question.imagePaths != null && question.imagePaths!.isNotEmpty) {
         for (var imagePath in question.imagePaths!) {
@@ -302,9 +316,11 @@ pw.Widget _buildQuestionWidget(
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Text(
-              questionText,
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            pw.Row(
+              children: [
+                pw.Text('${counter.count++}. '),
+                _buildTextWithFractions(question.title),
+              ],
             ),
             pw.SizedBox(height: 8),
             pw.Row(
@@ -327,10 +343,7 @@ pw.Widget _buildQuestionWidget(
                           '${String.fromCharCode(97 + entry.key)}. ${entry.value.title}';
                       return pw.Padding(
                         padding: const pw.EdgeInsets.only(bottom: 8.0),
-                        child: pw.Text(
-                          subQuestionText,
-                          textAlign: pw.TextAlign.justify,
-                        ),
+                        child: _buildTextWithFractions(subQuestionText),
                       );
                     }).toList(),
                   ),
@@ -340,5 +353,78 @@ pw.Widget _buildQuestionWidget(
           ],
         ),
       );
+    case QuestionType.table:
+      return pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 16.0),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Row(
+              children: [
+                pw.Text('${counter.count++}. '),
+                _buildTextWithFractions(question.title),
+              ],
+            ),
+            pw.SizedBox(height: 8),
+            pw.Table.fromTextArray(
+              data: question.tableData ?? [],
+              border: pw.TableBorder.all(),
+              cellStyle: const pw.TextStyle(),
+              cellAlignment: pw.Alignment.center,
+            ),
+          ],
+        ),
+      );
   }
+}
+
+pw.Widget _buildTextWithFractions(String text) {
+  final List<pw.InlineSpan> spans = [];
+  final RegExp fractionRegExp = RegExp(r'(\d*)\s*\{(\d+)/(\d+)}');
+
+  text.splitMapJoin(
+    fractionRegExp,
+    onMatch: (Match match) {
+      final wholeNumber = match.group(1);
+      final numerator = match.group(2)!;
+      final denominator = match.group(3)!;
+
+      final fractionWidget = pw.SizedBox(
+        width: 20,
+        child: pw.Column(
+          mainAxisAlignment: pw.MainAxisAlignment.center,
+          children: [
+            pw.Text(numerator, style: const pw.TextStyle(fontSize: 10)),
+            pw.Container(height: 1, color: PdfColors.black, width: 15),
+            pw.Text(denominator, style: const pw.TextStyle(fontSize: 10)),
+          ],
+        ),
+      );
+
+      if (wholeNumber != null && wholeNumber.isNotEmpty) {
+        spans.add(
+          pw.WidgetSpan(
+            child: pw.Row(
+              mainAxisSize: pw.MainAxisSize.min,
+              children: [
+                pw.Text(wholeNumber),
+                pw.SizedBox(width: 2),
+                fractionWidget,
+              ],
+            ),
+          ),
+        );
+      } else {
+        spans.add(pw.WidgetSpan(child: fractionWidget));
+      }
+
+      return '';
+    },
+    onNonMatch: (String nonMatch) {
+      spans.add(pw.TextSpan(text: nonMatch));
+      return '';
+    },
+  );
+
+  return pw.RichText(text: pw.TextSpan(children: spans));
 }

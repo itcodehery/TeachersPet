@@ -1,13 +1,45 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:minty/tips.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _currentTipIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentTipIndex = Random().nextInt(Tips.tips.length);
+  }
+
+  void _cycleTip() {
+    setState(() {
+      _currentTipIndex = (_currentTipIndex + 1) % Tips.tips.length;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('TeachersPet')),
+      appBar: AppBar(
+        title: Row(
+          spacing: 5,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.energy_savings_leaf_outlined, color: Colors.lime),
+            const Text('Minty'),
+          ],
+        ),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -28,7 +60,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 20),
             _buildFeatureCard(
               context: context,
               icon: Icons.add,
@@ -45,6 +77,20 @@ class HomeScreen extends StatelessWidget {
               onTap: () => context.push('/saved-forms'),
             ),
           ],
+        ),
+      ),
+      bottomNavigationBar: TextButton(
+        onPressed: _cycleTip,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(
+            'Tip: ${Tips.tips[_currentTipIndex]}',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.grey,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
         ),
       ),
     );

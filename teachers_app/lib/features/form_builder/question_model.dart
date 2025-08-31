@@ -9,6 +9,7 @@ enum QuestionType {
   questionWithImage,
   groupedQuestionWithImage,
   mainDivider,
+  table,
 }
 
 class Question {
@@ -21,6 +22,7 @@ class Question {
   final List<Question>? subQuestions; // For groupedQuestions
   final List<String>?
   imagePaths; // For questionWithImage and groupedQuestionWithImage
+  final List<List<String>>? tableData; // For table
 
   Question({
     required this.id,
@@ -31,6 +33,7 @@ class Question {
     this.sectionTitle,
     this.subQuestions,
     this.imagePaths,
+    this.tableData,
   });
 
   Map<String, dynamic> toJson() => {
@@ -42,6 +45,7 @@ class Question {
     'sectionTitle': sectionTitle,
     'subQuestions': subQuestions?.map((q) => q.toJson()).toList(),
     'imagePaths': imagePaths,
+    'tableData': tableData,
   };
 
   factory Question.fromJson(Map<String, dynamic> json) => Question(
@@ -55,6 +59,9 @@ class Question {
         ?.map((q) => Question.fromJson(q as Map<String, dynamic>))
         .toList(),
     imagePaths: (json['imagePaths'] as List?)?.map((e) => e as String).toList(),
+    tableData: (json['tableData'] as List?)
+        ?.map((row) => (row as List).map((cell) => cell as String).toList())
+        .toList(),
   );
 }
 
@@ -81,6 +88,8 @@ extension QuestionTypeExtension on QuestionType {
         return QuestionType.questionWithImage;
       case 'groupedQuestionWithImage':
         return QuestionType.groupedQuestionWithImage;
+      case 'table':
+        return QuestionType.table;
       default:
         throw Exception('Unknown QuestionType: $s');
     }
