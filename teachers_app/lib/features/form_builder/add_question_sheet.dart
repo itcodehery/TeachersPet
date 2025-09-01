@@ -120,10 +120,10 @@ class _AddQuestionSheetState extends ConsumerState<AddQuestionSheet> {
                     _imagePaths.remove(path);
                   });
                 },
-                child: const CircleAvatar(
+                child: CircleAvatar(
                   radius: 12,
-                  backgroundColor: Colors.black54,
-                  child: Icon(Icons.close, color: Colors.white, size: 16),
+                  backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                  child: Icon(Icons.close, color: Theme.of(context).colorScheme.surface, size: 16),
                 ),
               ),
             ),
@@ -396,213 +396,227 @@ class _AddQuestionSheetState extends ConsumerState<AddQuestionSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              widget.initialQuestion == null ? 'Add Node' : 'Edit Node',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<QuestionType>(
-              initialValue: _type,
-              decoration: const InputDecoration(labelText: 'Question Type'),
-              items: QuestionType.values
-                  .map(
-                    (type) => DropdownMenuItem(
-                      value: type,
-                      child: Text(getTypeNameFromQuestion(type)),
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                widget.initialQuestion == null ? 'Add Node' : 'Edit Node',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<QuestionType>(
+                initialValue: _type,
+                decoration: const InputDecoration(labelText: 'Question Type'),
+                items: QuestionType.values
+                    .map(
+                      (type) => DropdownMenuItem(
+                        value: type,
+                        child: Text(getTypeNameFromQuestion(type)),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (type) =>
+                    setState(() => _type = type ?? QuestionType.shortAnswer),
+              ),
+              const SizedBox(height: 16),
+              if (_type == QuestionType.mainDivider)
+                TextFormField(
+                  initialValue: _sectionTitle,
+                  decoration: const InputDecoration(labelText: 'Main Title'),
+                  validator: (val) =>
+                      val == null || val.trim().isEmpty ? 'Required' : null,
+                  onChanged: (val) => setState(() => _sectionTitle = val),
+                ),
+              if (_type == QuestionType.mainDivider)
+                TextFormField(
+                  initialValue: _marks,
+                  decoration: const InputDecoration(labelText: 'Marks'),
+                  validator: (val) =>
+                      val == null || val.trim().isEmpty ? 'Required' : null,
+                  onChanged: (val) => setState(() => _marks = val),
+                ),
+              if (_type != QuestionType.sectionDivider &&
+                  _type != QuestionType.mainDivider)
+                TextFormField(
+                  controller: _titleController,
+                  decoration: InputDecoration(
+                    labelText:
+                        (_type == QuestionType.groupedQuestions ||
+                            _type == QuestionType.groupedQuestionWithImage)
+                        ? 'Main Question Title (optional)'
+                        : 'Question Title',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.functions),
+                      onPressed: () async {
+                        final fraction = await showDialog<String>(
+                          context: context,
+                          builder: (context) => const FractionInputDialog(),
+                        );
+                        if (fraction != null) {
+                          final currentText = _titleController.text;
+                          final selection = _titleController.selection;
+                          final newText = currentText.replaceRange(
+                            selection.start,
+                            selection.end,
+                            fraction,
+                          );
+                          _titleController.text = newText;
+                          _titleController.selection =
+                              TextSelection.fromPosition(
+                                TextPosition(
+                                  offset: selection.start + fraction.length,
+                                ),
+                              );
+                        }
+                      },
                     ),
-                  )
-                  .toList(),
-              onChanged: (type) =>
-                  setState(() => _type = type ?? QuestionType.shortAnswer),
-            ),
-            const SizedBox(height: 16),
-            if (_type == QuestionType.mainDivider)
-              TextFormField(
-                initialValue: _sectionTitle,
-                decoration: const InputDecoration(labelText: 'Main Title'),
-                validator: (val) =>
-                    val == null || val.trim().isEmpty ? 'Required' : null,
-                onChanged: (val) => setState(() => _sectionTitle = val),
-              ),
-            if (_type == QuestionType.mainDivider)
-              TextFormField(
-                initialValue: _marks,
-                decoration: const InputDecoration(labelText: 'Marks'),
-                validator: (val) =>
-                    val == null || val.trim().isEmpty ? 'Required' : null,
-                onChanged: (val) => setState(() => _marks = val),
-              ),
-            if (_type != QuestionType.sectionDivider &&
-                _type != QuestionType.mainDivider)
-              TextFormField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  labelText:
-                      (_type == QuestionType.groupedQuestions ||
-                          _type == QuestionType.groupedQuestionWithImage)
-                      ? 'Main Question Title (optional)'
-                      : 'Question Title',
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.functions),
-                    onPressed: () async {
-                      final fraction = await showDialog<String>(
-                        context: context,
-                        builder: (context) => const FractionInputDialog(),
-                      );
-                      if (fraction != null) {
-                        final currentText = _titleController.text;
-                        final selection = _titleController.selection;
-                        final newText = currentText.replaceRange(
-                          selection.start,
-                          selection.end,
-                          fraction,
+                  ),
+                  validator:
+                      (_type != QuestionType.groupedQuestions &&
+                          _type != QuestionType.groupedQuestionWithImage)
+                      ? (val) => val == null || val.trim().isEmpty
+                            ? 'Required'
+                            : null
+                      : null,
+                  onChanged: (val) => setState(() => _title = val),
+                ),
+              if (_type == QuestionType.multipleChoice) _buildOptionsInput(),
+              if (_type == QuestionType.matchTheFollowing) _buildPairsInput(),
+              if (_type == QuestionType.table) _buildTableInput(),
+              if (_type == QuestionType.groupedQuestions ||
+                  _type == QuestionType.groupedQuestionWithImage)
+                _buildSubQuestionsInput(),
+              if (_type == QuestionType.questionWithImage ||
+                  _type == QuestionType.groupedQuestionWithImage)
+                _buildImagePicker(),
+              if (_type == QuestionType.sectionDivider)
+                TextFormField(
+                  initialValue: _sectionTitle,
+                  decoration: InputDecoration(
+                    labelText: _type == QuestionType.mainDivider
+                        ? 'Main Title'
+                        : 'Section Title',
+                  ),
+                  validator: (val) =>
+                      val == null || val.trim().isEmpty ? 'Required' : null,
+                  onChanged: (val) => setState(() => _sectionTitle = val),
+                ),
+              if (_type == QuestionType.sectionDivider)
+                TextFormField(
+                  initialValue: _marks,
+                  decoration: const InputDecoration(labelText: 'Marks'),
+                  validator: (val) =>
+                      val == null || val.trim().isEmpty ? 'Required' : null,
+                  onChanged: (val) => setState(() => _marks = val),
+                ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => context.pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                    ),
+                    onPressed: () {
+                      if (_formKey.currentState?.validate() ?? false) {
+                        final question = Question(
+                          id:
+                              _editingId ??
+                              DateTime.now().millisecondsSinceEpoch.toString(),
+                          title:
+                              (_type == QuestionType.sectionDivider ||
+                                  _type == QuestionType.mainDivider)
+                              ? _sectionTitle ?? ''
+                              : _titleController.text, // Use controller text
+                          type: _type,
+                          options: _type == QuestionType.multipleChoice
+                              ? _options
+                              : _type == QuestionType.matchTheFollowing
+                              ? _pairs
+                                    .map((e) => '${e.key}=${e.value}')
+                                    .toList()
+                              : null,
+                          marks:
+                              (_type == QuestionType.sectionDivider ||
+                                  _type == QuestionType.mainDivider)
+                              ? _marks
+                              : null,
+                          sectionTitle:
+                              (_type == QuestionType.sectionDivider ||
+                                  _type == QuestionType.mainDivider)
+                              ? _sectionTitle
+                              : null,
+                          subQuestions:
+                              (_type == QuestionType.groupedQuestions ||
+                                  _type ==
+                                      QuestionType.groupedQuestionWithImage)
+                              ? _subQuestions
+                                    .map(
+                                      (subQ) => Question(
+                                        id: DateTime.now()
+                                            .millisecondsSinceEpoch
+                                            .toString(),
+                                        title: subQ,
+                                        type: QuestionType.shortAnswer,
+                                      ),
+                                    )
+                                    .toList()
+                              : null,
+                          imagePaths:
+                              (_type == QuestionType.questionWithImage ||
+                                  _type ==
+                                      QuestionType.groupedQuestionWithImage)
+                              ? _imagePaths
+                              : null,
+                          tableData: _type == QuestionType.table
+                              ? _tableControllers
+                                    .map(
+                                      (row) => row
+                                          .map((controller) => controller.text)
+                                          .toList(),
+                                    )
+                                    .toList()
+                              : null,
                         );
-                        _titleController.text = newText;
-                        _titleController.selection = TextSelection.fromPosition(
-                          TextPosition(
-                            offset: selection.start + fraction.length,
-                          ),
-                        );
+
+                        if (widget.initialQuestion != null) {
+                          ref
+                              .read(formBuilderProvider.notifier)
+                              .updateQuestion(question);
+                        } else {
+                          ref
+                              .read(formBuilderProvider.notifier)
+                              .addQuestion(question);
+                        }
+
+                        context.pop();
                       }
                     },
+                    child: const Text('Add'),
                   ),
-                ),
-                validator:
-                    (_type != QuestionType.groupedQuestions &&
-                        _type != QuestionType.groupedQuestionWithImage)
-                    ? (val) =>
-                          val == null || val.trim().isEmpty ? 'Required' : null
-                    : null,
-                onChanged: (val) => setState(() => _title = val),
+                ],
               ),
-            if (_type == QuestionType.multipleChoice) _buildOptionsInput(),
-            if (_type == QuestionType.matchTheFollowing) _buildPairsInput(),
-            if (_type == QuestionType.table) _buildTableInput(),
-            if (_type == QuestionType.groupedQuestions ||
-                _type == QuestionType.groupedQuestionWithImage)
-              _buildSubQuestionsInput(),
-            if (_type == QuestionType.questionWithImage ||
-                _type == QuestionType.groupedQuestionWithImage)
-              _buildImagePicker(),
-            if (_type == QuestionType.sectionDivider)
-              TextFormField(
-                initialValue: _sectionTitle,
-                decoration: InputDecoration(
-                  labelText: _type == QuestionType.mainDivider
-                      ? 'Main Title'
-                      : 'Section Title',
-                ),
-                validator: (val) =>
-                    val == null || val.trim().isEmpty ? 'Required' : null,
-                onChanged: (val) => setState(() => _sectionTitle = val),
-              ),
-            if (_type == QuestionType.sectionDivider)
-              TextFormField(
-                initialValue: _marks,
-                decoration: const InputDecoration(labelText: 'Marks'),
-                validator: (val) =>
-                    val == null || val.trim().isEmpty ? 'Required' : null,
-                onChanged: (val) => setState(() => _marks = val),
-              ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => context.pop(),
-                  child: const Text('Cancel'),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.lime,
-                    foregroundColor: Colors.black87,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(100),
-                    ),
-                  ),
-                  onPressed: () {
-                    if (_formKey.currentState?.validate() ?? false) {
-                      final question = Question(
-                        id:
-                            _editingId ??
-                            DateTime.now().millisecondsSinceEpoch.toString(),
-                        title:
-                            (_type == QuestionType.sectionDivider ||
-                                _type == QuestionType.mainDivider)
-                            ? _sectionTitle ?? ''
-                            : _titleController.text, // Use controller text
-                        type: _type,
-                        options: _type == QuestionType.multipleChoice
-                            ? _options
-                            : _type == QuestionType.matchTheFollowing
-                            ? _pairs.map((e) => '${e.key}=${e.value}').toList()
-                            : null,
-                        marks:
-                            (_type == QuestionType.sectionDivider ||
-                                _type == QuestionType.mainDivider)
-                            ? _marks
-                            : null,
-                        sectionTitle:
-                            (_type == QuestionType.sectionDivider ||
-                                _type == QuestionType.mainDivider)
-                            ? _sectionTitle
-                            : null,
-                        subQuestions:
-                            (_type == QuestionType.groupedQuestions ||
-                                _type == QuestionType.groupedQuestionWithImage)
-                            ? _subQuestions
-                                  .map(
-                                    (subQ) => Question(
-                                      id: DateTime.now().millisecondsSinceEpoch
-                                          .toString(),
-                                      title: subQ,
-                                      type: QuestionType.shortAnswer,
-                                    ),
-                                  )
-                                  .toList()
-                            : null,
-                        imagePaths:
-                            (_type == QuestionType.questionWithImage ||
-                                _type == QuestionType.groupedQuestionWithImage)
-                            ? _imagePaths
-                            : null,
-                        tableData: _type == QuestionType.table
-                            ? _tableControllers
-                                  .map(
-                                    (row) => row
-                                        .map((controller) => controller.text)
-                                        .toList(),
-                                  )
-                                  .toList()
-                            : null,
-                      );
-
-                      if (widget.initialQuestion != null) {
-                        ref
-                            .read(formBuilderProvider.notifier)
-                            .updateQuestion(question);
-                      } else {
-                        ref
-                            .read(formBuilderProvider.notifier)
-                            .addQuestion(question);
-                      }
-
-                      context.pop();
-                    }
-                  },
-                  child: const Text('Add'),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

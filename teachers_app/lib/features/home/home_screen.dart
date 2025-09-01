@@ -34,11 +34,28 @@ class _HomeScreenState extends State<HomeScreen> {
           spacing: 5,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.energy_savings_leaf_outlined, color: Colors.lime),
-            const Text('Minty'),
+            Icon(
+              Icons.energy_savings_leaf_outlined,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            Text(
+              'Minty',
+              style: TextStyle(color: Theme.of(context).colorScheme.secondary),
+            ),
           ],
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: () {
+              context.push("/settings");
+            },
+            icon: Icon(
+              Icons.settings_outlined,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -52,7 +69,11 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Text(
                   "Build your own",
-                  style: TextStyle(color: Color.fromARGB(170, 255, 255, 255)),
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
+                  ),
                 ),
                 Text(
                   "Question Paper",
@@ -86,8 +107,8 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Text(
             'Tip: ${Tips.tips[_currentTipIndex]}',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.grey,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -106,12 +127,18 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       decoration: BoxDecoration(
         gradient: RadialGradient(
-          colors: [Colors.lightGreen.withAlpha(150), Colors.black],
+          colors: [
+            Theme.of(context).colorScheme.primary.withOpacity(0.6),
+            Theme.of(context).colorScheme.surface,
+          ],
           center: AlignmentGeometry.bottomRight,
           stops: [0.0, 1.0],
         ),
         borderRadius: BorderRadiusGeometry.circular(12),
-        border: BoxBorder.all(color: Colors.lime.withAlpha(40), width: 1),
+        border: BoxBorder.all(
+          color: Theme.of(context).colorScheme.primary.withAlpha(40),
+          width: 1,
+        ),
       ),
       child: InkWell(
         onTap: onTap,

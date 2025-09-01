@@ -1,4 +1,5 @@
 import 'package:minty/features/home/presentation/pages/home_page.dart';
+import 'package:minty/features/settings/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'app_routes.dart';
@@ -27,6 +28,11 @@ final router = GoRouter(
       name: Names.savedForms,
       path: Routes.savedForms,
       builder: (context, state) => const SavedFormsScreen(),
+    ),
+    GoRoute(
+      name: Names.settings,
+      path: Routes.settings,
+      builder: (context, state) => const SettingsPage(),
     ),
   ],
 );

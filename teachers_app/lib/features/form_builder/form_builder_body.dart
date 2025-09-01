@@ -177,7 +177,7 @@ class _FormBuilderBodyState extends ConsumerState<FormBuilderBody> {
             const SizedBox(height: 8),
             if (question.tableData != null)
               Table(
-                border: TableBorder.all(color: Colors.white70),
+                border: TableBorder.all(color: Theme.of(context).colorScheme.outline),
                 children: question.tableData!.map((row) {
                   return TableRow(
                     children: row.map((cell) {
@@ -356,17 +356,17 @@ class _FormBuilderBodyState extends ConsumerState<FormBuilderBody> {
                                   )
                                 : Container(),
                             IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.edit_outlined,
-                                color: Colors.grey,
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                               ),
                               onPressed: () =>
                                   _showEditSheet(context, questions[index]),
                             ),
                             IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.delete_outline,
-                                color: Colors.redAccent,
+                                color: Theme.of(context).colorScheme.error,
                               ),
                               onPressed: () {
                                 ref

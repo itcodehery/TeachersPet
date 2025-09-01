@@ -28,6 +28,8 @@ dependencies:
   image_picker: ^1.0.7
   printing: ^5.11.1
   top_snackbar_flutter: ^3.3.0
+  spell_check_on_client: ^1.0.0
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:
@@ -52,6 +54,7 @@ flutter:
     - assets/timesbd.ttf
     - assets/timesbi.ttf
     - assets/timesi.ttf
+    - assets/en_words.txt
   fonts:
     - family: AnonymicePro
       fonts:

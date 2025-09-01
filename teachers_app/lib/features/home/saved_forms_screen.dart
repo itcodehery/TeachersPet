@@ -51,11 +51,16 @@ class _SavedFormsScreenState extends ConsumerState<SavedFormsScreen> {
             itemBuilder: (context, index) {
               final form = forms[index];
               return Card(
-                elevation: 2,
+                elevation: 0,
                 shape: RoundedRectangleBorder(
+                  side: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.light
+                        ? Theme.of(context).primaryColor.withAlpha(40)
+                        : Theme.of(context).colorScheme.primary.withAlpha(100),
+                  ),
                   borderRadius: BorderRadiusGeometry.all(Radius.circular(24)),
                 ),
-                color: Colors.lime.withAlpha(40),
+                color: Theme.of(context).cardColor,
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16),
@@ -80,7 +85,10 @@ class _SavedFormsScreenState extends ConsumerState<SavedFormsScreen> {
                   ),
                   onTap: () => context.push(Routes.formBuilder, extra: form),
                   trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.lime),
+                    icon: Icon(
+                      Icons.delete,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                     onPressed: () => _deleteForm(form.id),
                   ),
                 ),

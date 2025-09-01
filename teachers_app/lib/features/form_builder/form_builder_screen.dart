@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +14,7 @@ import 'package:minty/features/document_generator/document_generator_state.dart'
 import 'package:minty/features/document_generator/pdf_generator.dart';
 import 'package:printing/printing.dart';
 import 'package:minty/widgets/app_snackbar.dart';
+import 'package:minty/features/form_builder/grammar_n_spellcheck/spellchecker.dart';
 
 class FormBuilderScreen extends ConsumerStatefulWidget {
   final SavedForm? form;
@@ -23,6 +26,7 @@ class FormBuilderScreen extends ConsumerStatefulWidget {
 }
 
 class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
+  bool _isSpellChecking = false;
   @override
   void initState() {
     super.initState();
@@ -122,8 +126,56 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
       'Reset Form': (BuildContext context, WidgetRef ref) {
         ref.read(formBuilderProvider.notifier).clearQuestions();
       },
-      'Grammar & Spelling': (BuildContext context, WidgetRef ref) {
-        AppSnackbar.showInfo(context, "Running the Grammar and Spell Check...");
+      'Grammar & Spelling': (BuildContext context, WidgetRef ref) async {
+        context.pop();
+        setState(() => _isSpellChecking = true);
+        await Future.delayed(const Duration(milliseconds: 100));
+        final allTexts = <String>[];
+        for (final q in form.questions) {
+          allTexts.add(q.title);
+          if (q.options != null) allTexts.addAll(q.options!);
+          if (q.subQuestions != null) {
+            for (final subQ in q.subQuestions!) {
+              allTexts.add(subQ.title);
+            }
+          }
+        }
+        SpellChecker.initSpellCheck();
+        final corrected = SpellChecker.correctText(allTexts);
+        setState(() => _isSpellChecking = false);
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Spell Check Results'),
+            content: SizedBox(
+              width: 300,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (int i = 0; i < allTexts.length; i++)
+                      Text(
+                        allTexts[i] == corrected[i]
+                            ? allTexts[i]
+                            : '${allTexts[i]} → ${corrected[i]}',
+                        style: TextStyle(
+                          color: allTexts[i] == corrected[i]
+                              ? Theme.of(context).colorScheme.onSurface
+                              : Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        );
       },
     };
 
@@ -135,104 +187,162 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
       'Grammar & Spelling': Icons.book_outlined,
     };
 
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              decoration: BoxDecoration(color: Colors.lime.withAlpha(20)),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8.0,
-                  vertical: 8.0,
-                ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () => context.pop(),
+    return Stack(
+      children: [
+        Scaffold(
+          body: SafeArea(
+            child: Column(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Theme.of(context).colorScheme.primary.withAlpha(20)
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onPrimary.withAlpha(160),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0,
+                      vertical: 8.0,
                     ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          TextButton(
-                            onPressed: () =>
-                                _showEditNameDialog(context, form.name),
-                            style: TextButton.styleFrom(
-                              backgroundColor: Colors.lime.withAlpha(25),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  form.name,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed: () => context.pop(),
+                        ),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              TextButton(
+                                onPressed: () =>
+                                    _showEditNameDialog(context, form.name),
+                                style: TextButton.styleFrom(
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withAlpha(25),
                                 ),
-                                const SizedBox(width: 4),
-                                const Icon(Icons.edit_outlined, size: 16),
-                              ],
-                            ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      form.name,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(Icons.edit_outlined, size: 16),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Last modified: ${DateFormat.yMd().add_jm().format(form.lastModified)}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.save_outlined),
+                          onPressed: () {
+                            SavedFormsService.addForm(form).then((_) {
+                              if (context.mounted) {
+                                AppSnackbar.showSuccess(
+                                  context,
+                                  'Form "${form.name}" saved!',
+                                );
+                              }
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Divider(height: 1),
+                const Expanded(child: FormBuilderBody()),
+              ],
+            ),
+          ),
+          floatingActionButton: SplitButton(
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            onPressed: () => splitOptionList['Add Node']!(context, ref),
+            elevation: 0,
+            menuRadius: Radius.circular(12),
+            popupList: splitOptionList.entries.map((entry) {
+              return SplitButtonEntry(
+                value: entry.key,
+                child: ListTile(
+                  dense: true,
+                  onTap: () => entry.value(context, ref),
+                  textColor: Theme.of(context).colorScheme.onPrimary,
+                  iconColor: Theme.of(context).colorScheme.onPrimary,
+                  leading: Icon(splitOptionIcons[entry.key]),
+                  title: Text(entry.key),
+                ),
+              );
+            }).toList(),
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.add),
+                const Text('Add Node', style: TextStyle(fontFamily: 'Outfit')),
+              ],
+            ),
+          ),
+        ),
+        if (_isSpellChecking)
+          Positioned.fill(
+            child: Container(
+              color: Theme.of(
+                context,
+              ).colorScheme.scrim.withAlpha(128), // Dim the background
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: 5,
+                        sigmaY: 5,
+                      ), // Blur effect
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(height: 16),
                           Text(
-                            'Last modified: ${DateFormat.yMd().add_jm().format(form.lastModified)}',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Colors.white70,
-                            ),
+                            'Checking grammar and spelling...',
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                         ],
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.save_outlined),
-                      onPressed: () {
-                        SavedFormsService.addForm(form).then((_) {
-                          if (context.mounted) {
-                            AppSnackbar.showSuccess(
-                              context,
-                              'Form "${form.name}" saved!',
-                            );
-                          }
-                        });
-                      },
                     ),
                   ],
                 ),
               ),
             ),
-            const Divider(height: 1),
-            const Expanded(child: FormBuilderBody()),
-          ],
-        ),
-      ),
-      floatingActionButton: SplitButton(
-        backgroundColor: Colors.lime,
-        foregroundColor: Colors.black,
-        onPressed: () => splitOptionList['Add Node']!(context, ref),
-        popupList: splitOptionList.entries.map((entry) {
-          return SplitButtonEntry(
-            value: entry.key,
-            child: ListTile(
-              onTap: () => entry.value(context, ref),
-              textColor: Colors.black,
-              iconColor: Colors.black,
-              leading: Icon(splitOptionIcons[entry.key]),
-              title: Text(entry.key),
-            ),
-          );
-        }).toList(),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.add),
-            const Text('Add Node', style: TextStyle(fontFamily: 'Outfit')),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
   }
 }

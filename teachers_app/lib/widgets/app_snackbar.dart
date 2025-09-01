@@ -4,13 +4,14 @@ import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 
 class AppSnackbar {
   static void showSuccess(BuildContext context, String message) {
+    final theme = Theme.of(context);
     showTopSnackBar(
       Overlay.of(context),
       CustomSnackBar.success(
         message: message,
-        backgroundColor: Colors.lime,
+        backgroundColor: theme.colorScheme.primary,
         textStyle: TextStyle(
-          color: Colors.black87,
+          color: theme.colorScheme.onPrimary,
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
@@ -19,13 +20,14 @@ class AppSnackbar {
   }
 
   static void showInfo(BuildContext context, String message) {
+    final theme = Theme.of(context);
     showTopSnackBar(
       Overlay.of(context),
       CustomSnackBar.info(
         message: message,
-        backgroundColor: Colors.lime.shade600,
+        backgroundColor: theme.colorScheme.primaryContainer,
         textStyle: TextStyle(
-          color: Colors.black87,
+          color: theme.colorScheme.onPrimaryContainer,
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
@@ -34,13 +36,14 @@ class AppSnackbar {
   }
 
   static void showError(BuildContext context, String message) {
+    final theme = Theme.of(context);
     showTopSnackBar(
       Overlay.of(context),
       CustomSnackBar.error(
         message: message,
-        backgroundColor: Colors.redAccent,
+        backgroundColor: theme.colorScheme.error,
         textStyle: TextStyle(
-          color: Colors.black87,
+          color: theme.colorScheme.onError,
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
