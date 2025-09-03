@@ -6,11 +6,23 @@ import '../form_builder/question_model.dart';
 class SavedForm {
   final String id;
   final String name;
+  final String grade;
+  final String subject;
+  final String code;
+  final String marks;
+  final String duration;
+  final String date;
   final DateTime createdOn;
   final DateTime lastModified;
   final List<Question> questions;
 
   SavedForm({
+    required this.grade,
+    required this.subject,
+    required this.code,
+    required this.marks,
+    required this.duration,
+    required this.date,
     required this.id,
     required this.name,
     required this.createdOn,
@@ -24,6 +36,12 @@ class SavedForm {
     DateTime? createdOn,
     DateTime? lastModified,
     List<Question>? questions,
+    String? grade,
+    String? subject,
+    String? code,
+    String? marks,
+    String? duration,
+    String? date,
   }) {
     return SavedForm(
       id: id ?? this.id,
@@ -31,26 +49,44 @@ class SavedForm {
       createdOn: createdOn ?? this.createdOn,
       lastModified: lastModified ?? this.lastModified,
       questions: questions ?? this.questions,
+      grade: grade ?? this.grade,
+      subject: subject ?? this.subject,
+      code: code ?? this.code,
+      marks: marks ?? this.marks,
+      duration: duration ?? this.duration,
+      date: date ?? this.date,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'createdOn': createdOn.toIso8601String(),
-        'lastModified': lastModified.toIso8601String(),
-        'questions': questions.map((q) => q.toJson()).toList(),
-      };
+    'id': id,
+    'name': name,
+    'createdOn': createdOn.toIso8601String(),
+    'lastModified': lastModified.toIso8601String(),
+    'questions': questions.map((q) => q.toJson()).toList(),
+    'grade': grade,
+    'subject': subject,
+    'code': code,
+    'marks': marks,
+    'duration': duration,
+    'date': date,
+  };
 
   factory SavedForm.fromJson(Map<String, dynamic> json) => SavedForm(
-        id: json['id'],
-        name: json['name'],
-        createdOn: DateTime.parse(json['createdOn']),
-        lastModified: DateTime.parse(json['lastModified']),
-        questions: (json['questions'] as List)
-            .map((q) => Question.fromJson(q))
-            .toList(),
-      );
+    id: json['id'],
+    name: json['name'],
+    grade: json['grade'],
+    subject: json['subject'],
+    code: json['code'],
+    marks: json['marks'],
+    duration: json['duration'],
+    date: json['date'],
+    createdOn: DateTime.parse(json['createdOn']),
+    lastModified: DateTime.parse(json['lastModified']),
+    questions: (json['questions'] as List)
+        .map((q) => Question.fromJson(q))
+        .toList(),
+  );
 }
 
 class SavedFormsService {
@@ -84,5 +120,12 @@ class SavedFormsService {
     final forms = await loadForms();
     forms.removeWhere((f) => f.id == id);
     await saveForms(forms);
+  }
+
+  static Future<void> deleteAllForms() async {
+    final file = await _getFile();
+    if (await file.exists()) {
+      await file.delete();
+    }
   }
 }

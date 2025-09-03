@@ -28,10 +28,50 @@ class _SavedFormsScreenState extends ConsumerState<SavedFormsScreen> {
     });
   }
 
+  void _deleteAllForms() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete All Forms'),
+        content: const Text(
+          'Are you sure you want to delete all saved forms? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete All'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await SavedFormsService.deleteAllForms();
+      setState(() {
+        _formsFuture = SavedFormsService.loadForms();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Saved Forms')),
+      appBar: AppBar(
+        title: const Text('Saved Forms'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_forever),
+            onPressed: _deleteAllForms,
+          ),
+        ],
+      ),
       body: FutureBuilder<List<SavedForm>>(
         future: _formsFuture,
         builder: (context, snapshot) {

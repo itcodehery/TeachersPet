@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:minty/features/form_builder/saved_forms_service.dart';
 import 'package:uuid/uuid.dart';
@@ -12,6 +13,12 @@ class FormBuilderNotifier extends StateNotifier<SavedForm> {
           createdOn: DateTime.now(),
           lastModified: DateTime.now(),
           questions: [],
+          grade: '',
+          subject: '',
+          code: '',
+          marks: '',
+          duration: '',
+          date: '',
         ),
       );
 
@@ -56,8 +63,30 @@ class FormBuilderNotifier extends StateNotifier<SavedForm> {
     state = state.copyWith(questions: questions, lastModified: DateTime.now());
   }
 
-  void updateFormName(String name) {
-    state = state.copyWith(name: name, lastModified: DateTime.now());
+  void updateFormName(
+    String name, {
+    String? grade,
+    String? subject,
+    String? code,
+    String? marks,
+    String? duration,
+    String? date,
+  }) {
+    debugPrint(
+      '---------------- updateFormName to : $name, $grade, $subject, $code, $marks, $duration, $date',
+    );
+    state = state.copyWith(
+      name: name,
+      lastModified: DateTime.now(),
+      grade: grade,
+      subject: subject,
+      code: code,
+      marks: marks,
+      duration: duration,
+      date: date,
+      questions: state.questions,
+      createdOn: state.createdOn,
+    );
   }
 }
 

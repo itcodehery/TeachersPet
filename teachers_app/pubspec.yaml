@@ -55,6 +55,7 @@ flutter:
     - assets/timesbi.ttf
     - assets/timesi.ttf
     - assets/en_words.txt
+    - assets/florence_academy.png
   fonts:
     - family: AnonymicePro
       fonts:

@@ -38,16 +38,68 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
     }
   }
 
-  void _showEditNameDialog(BuildContext context, String currentName) {
-    final controller = TextEditingController(text: currentName);
+  void _showEditNameDialog(BuildContext context, SavedForm form) {
+    final nameController = TextEditingController(text: form.name);
+    final gradeController = TextEditingController(text: form.grade);
+    final subjectController = TextEditingController(text: form.subject);
+    final codeController = TextEditingController(text: form.code);
+    final marksController = TextEditingController(text: form.marks);
+    final durationController = TextEditingController(text: form.duration);
+    final dateController = TextEditingController(text: form.date);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Form Name'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: 'Form Name'),
+        title: const Text('Edit Form Details'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                autofocus: true,
+                decoration: const InputDecoration(labelText: 'Form Name'),
+              ),
+              TextField(
+                controller: gradeController,
+                decoration: const InputDecoration(labelText: 'Grade'),
+              ),
+              TextField(
+                controller: subjectController,
+                decoration: const InputDecoration(labelText: 'Subject'),
+              ),
+              TextField(
+                controller: codeController,
+                decoration: const InputDecoration(labelText: 'Code'),
+              ),
+              TextField(
+                controller: marksController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Marks'),
+              ),
+              TextField(
+                controller: durationController,
+                decoration: const InputDecoration(labelText: 'Duration'),
+                // keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: dateController,
+                decoration: const InputDecoration(labelText: 'Date'),
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (date != null) {
+                    dateController.text = DateFormat('yyyy-MM-dd').format(date);
+                  }
+                },
+                readOnly: true,
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -56,10 +108,31 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
           ),
           TextButton(
             onPressed: () {
-              if (controller.text.isNotEmpty) {
+              if (nameController.text.isNotEmpty) {
+                // Here you would need to update your form provider to handle the additional fields
                 ref
                     .read(formBuilderProvider.notifier)
-                    .updateFormName(controller.text);
+                    .updateFormName(
+                      nameController.text,
+                      grade: gradeController.text.isEmpty
+                          ? null
+                          : gradeController.text,
+                      subject: subjectController.text.isEmpty
+                          ? null
+                          : subjectController.text,
+                      code: codeController.text.isEmpty
+                          ? null
+                          : codeController.text,
+                      marks: marksController.text.isEmpty
+                          ? null
+                          : marksController.text,
+                      duration: durationController.text.isEmpty
+                          ? null
+                          : durationController.text,
+                      date: dateController.text.isEmpty
+                          ? null
+                          : dateController.text,
+                    );
                 context.pop();
               }
             },
@@ -100,9 +173,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
           AppSnackbar.showError(context, 'No questions to export!');
           return;
         }
-        ref
-            .read(documentGeneratorProvider.notifier)
-            .generateDocument(form.questions);
+        ref.read(documentGeneratorProvider.notifier).generateDocument(form);
       },
       'Preview': (BuildContext context, WidgetRef ref) async {
         if (form.questions.isEmpty) {
@@ -111,7 +182,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
         }
 
         AppSnackbar.showInfo(context, 'Generating preview...');
-        final pdfBytes = await generateQuestionPaperPdf(form.questions);
+        final pdfBytes = await generateQuestionPaperPdf(form);
 
         Navigator.push(
           context,
@@ -217,7 +288,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
                             children: [
                               TextButton(
                                 onPressed: () =>
-                                    _showEditNameDialog(context, form.name),
+                                    _showEditNameDialog(context, form),
                                 style: TextButton.styleFrom(
                                   backgroundColor: Theme.of(
                                     context,

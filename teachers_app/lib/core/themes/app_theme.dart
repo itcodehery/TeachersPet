@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme_storage.dart';
 
-enum AppThemeType { light, dark, minty, ocean, sunset, mintyLegacy }
+enum AppThemeType { light, dark, minty, ocean, midday, sunset, mintyLegacy }
 
 class AppTheme {
   static const String fontFamily = 'Outfit';
@@ -17,8 +17,10 @@ class AppTheme {
         return _mintyTheme;
       case AppThemeType.ocean:
         return _oceanTheme;
-      case AppThemeType.sunset:
+      case AppThemeType.midday:
         return _sunsetTheme;
+      case AppThemeType.sunset:
+        return _sunsetOrangeTheme;
       case AppThemeType.mintyLegacy:
         return _mintyLegacyTheme;
     }
@@ -174,13 +176,13 @@ class AppTheme {
     );
   }
 
-  static ThemeData get _mintyLegacyTheme {
+  static ThemeData get _sunsetOrangeTheme {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: Colors.lime,
+      seedColor: Colors.orange,
       brightness: Brightness.dark,
     );
     return ThemeData(
-      primarySwatch: Colors.lime,
+      primarySwatch: Colors.orange,
       colorScheme: colorScheme,
       brightness: Brightness.dark,
       fontFamily: fontFamily,
@@ -188,7 +190,7 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         foregroundColor: colorScheme.primary,
       ),
-      scaffoldBackgroundColor: Colors.limeAccent.withAlpha(10),
+      scaffoldBackgroundColor: Colors.orangeAccent.withAlpha(10),
       cardTheme: CardThemeData(
         color: Colors.grey[850],
         elevation: 2,
@@ -196,7 +198,37 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.lime[600],
+          backgroundColor: Colors.orange[600],
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+    );
+  }
+
+  static ThemeData get _mintyLegacyTheme {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: Colors.teal,
+      brightness: Brightness.dark,
+    );
+    return ThemeData(
+      primarySwatch: Colors.teal,
+      colorScheme: colorScheme,
+      brightness: Brightness.dark,
+      fontFamily: fontFamily,
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        foregroundColor: colorScheme.primary,
+      ),
+      scaffoldBackgroundColor: Colors.tealAccent.withAlpha(10),
+      cardTheme: CardThemeData(
+        color: Colors.grey[850],
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.teal[600],
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
@@ -240,6 +272,8 @@ extension AppThemeTypeExtension on AppThemeType {
         return 'Minty Teal';
       case AppThemeType.ocean:
         return 'Ocean Blue';
+      case AppThemeType.midday:
+        return 'Midday Orange';
       case AppThemeType.sunset:
         return 'Sunset Orange';
       case AppThemeType.mintyLegacy:
@@ -257,8 +291,10 @@ extension AppThemeTypeExtension on AppThemeType {
         return Icons.eco;
       case AppThemeType.ocean:
         return Icons.water;
+      case AppThemeType.midday:
+        return Icons.wb_sunny_outlined;
       case AppThemeType.sunset:
-        return Icons.wb_sunny;
+        return Icons.nights_stay;
       case AppThemeType.mintyLegacy:
         return Icons.history;
     }

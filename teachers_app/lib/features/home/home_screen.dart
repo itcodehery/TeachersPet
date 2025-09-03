@@ -30,17 +30,30 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          spacing: 5,
-          mainAxisSize: MainAxisSize.min,
+        title: Column(
           children: [
-            Icon(
-              Icons.energy_savings_leaf_outlined,
-              color: Theme.of(context).colorScheme.primary,
+            Row(
+              spacing: 5,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.eco_outlined,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                Text(
+                  'Minty',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
+                ),
+              ],
             ),
             Text(
-              'Minty',
-              style: TextStyle(color: Theme.of(context).colorScheme.secondary),
+              "for Florence Academy CBSE",
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.secondary,
+              ),
             ),
           ],
         ),

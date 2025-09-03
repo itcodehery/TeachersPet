@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:minty/features/form_builder/saved_forms_service.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:minty/features/form_builder/question_model.dart';
@@ -30,7 +32,7 @@ const Map<int, String> romanNumeralsTill15 = {
   15: 'XV',
 };
 
-Future<Uint8List> generateQuestionPaperPdf(List<Question> questions) async {
+Future<Uint8List> generateQuestionPaperPdf(SavedForm form) async {
   final font = await rootBundle.load('assets/times.ttf');
   final boldFont = await rootBundle.load('assets/timesbd.ttf');
   final italicFont = await rootBundle.load('assets/timesi.ttf');
@@ -47,18 +49,29 @@ Future<Uint8List> generateQuestionPaperPdf(List<Question> questions) async {
   final counter = QuestionCounter();
   final mainCounter = MainCounter();
 
+  pw.MemoryImage? logoImage;
+  try {
+    logoImage = pw.MemoryImage(
+      await rootBundle
+          .load('assets/florence_academy.png')
+          .then((data) => data.buffer.asUint8List()),
+    );
+  } catch (e) {
+    debugPrint('Error loading header image: $e');
+    // logoImage will remain null
+  }
+
   pdf.addPage(
     pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.all(32),
+      header: (context) => _buildHeader(form, logoImage),
       build: (context) => [
-        pw.Header(
-          level: 0,
-          text: 'Question Paper',
-          textStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 24),
+        pw.Divider(),
+        // pw.SizedBox(height: 20),
+        ...form.questions.map(
+          (q) => _buildQuestionWidget(q, counter, mainCounter),
         ),
-        pw.SizedBox(height: 20),
-        ...questions.map((q) => _buildQuestionWidget(q, counter, mainCounter)),
       ],
     ),
   );
@@ -128,14 +141,27 @@ pw.Widget _buildQuestionWidget(
                 ],
               ),
               pw.SizedBox(height: 8),
-              pw.GridView(
-                crossAxisCount: 2,
-                childAspectRatio: 12,
-                children: options.asMap().entries.map((entry) {
-                  return pw.Text(
-                    '${String.fromCharCode(97 + entry.key)}. ${entry.value}',
-                  );
-                }).toList(),
+              pw.Table(
+                columnWidths: {
+                  0: const pw.FlexColumnWidth(1),
+                  1: const pw.FlexColumnWidth(1),
+                },
+                children: [
+                  for (int i = 0; i < options.length; i += 2)
+                    pw.TableRow(
+                      children: [
+                        pw.Text(
+                          '${String.fromCharCode(97 + i)}. ${options[i]}',
+                        ),
+                        if (i + 1 < options.length)
+                          pw.Text(
+                            '${String.fromCharCode(97 + i + 1)}. ${options[i + 1]}',
+                          )
+                        else
+                          pw.Text(''),
+                      ],
+                    ),
+                ],
               ),
             ],
           ),
@@ -427,4 +453,88 @@ pw.Widget _buildTextWithFractions(String text) {
   );
 
   return pw.RichText(text: pw.TextSpan(children: spans));
+}
+
+pw.Widget _buildHeader(SavedForm form, pw.MemoryImage? logoImage) {
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.center,
+    children: [
+      pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          logoImage != null
+              ? pw.Image(logoImage, width: 80, height: 80)
+              : pw.Container(),
+          pw.Column(
+            children: [
+              pw.Text(
+                "Florence Academy",
+                style: pw.TextStyle(
+                  fontSize: 24,
+                  decoration: pw.TextDecoration.underline,
+                ),
+              ),
+              pw.Text(
+                "Lighting your Way",
+                style: pw.TextStyle(fontStyle: pw.FontStyle.italic),
+              ),
+              pw.Text("Affiliated to CBSE No. 830628"),
+              pw.Text("Electronic City, Bengaluru - 100"),
+            ],
+          ),
+          pw.Container(width: 60),
+        ],
+      ),
+      pw.Text(
+        form.name.toUpperCase(),
+        style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+      ),
+      pw.SizedBox(height: 8),
+      pw.Table(
+        columnWidths: {
+          0: const pw.FlexColumnWidth(1),
+          1: const pw.FlexColumnWidth(1),
+        },
+        defaultVerticalAlignment: pw.TableCellVerticalAlignment.middle,
+        children: [
+          pw.TableRow(
+            children: [
+              pw.Text('Grade: ${form.grade}'),
+              pw.Align(
+                alignment: pw.Alignment.centerRight,
+                child: pw.Text('Code: ${form.code}'),
+              ),
+            ],
+          ),
+          pw.TableRow(
+            children: [
+              pw.Text('Subject: ${form.subject}'),
+              pw.Align(
+                alignment: pw.Alignment.centerRight,
+                child: pw.Text('Marks: ${form.marks}'),
+              ),
+            ],
+          ),
+          pw.TableRow(
+            children: [
+              pw.Text('Roll No: ___'),
+              pw.Align(
+                alignment: pw.Alignment.centerRight,
+                child: pw.Text('Duration: ${form.duration}'),
+              ),
+            ],
+          ),
+          pw.TableRow(
+            children: [
+              pw.Text('Name of the Student: ______'),
+              pw.Align(
+                alignment: pw.Alignment.centerRight,
+                child: pw.Text('Date: ${form.date}'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ],
+  );
 }
