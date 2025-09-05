@@ -7,23 +7,39 @@ enum AppThemeType { light, dark, minty, ocean, midday, sunset, mintyLegacy }
 class AppTheme {
   static const String fontFamily = 'Outfit';
 
-  static ThemeData getTheme(AppThemeType themeType) {
+  static ThemeData getTheme(AppThemeType themeType, double fontScaleFactor) {
+    ThemeData baseTheme;
     switch (themeType) {
       case AppThemeType.light:
-        return _lightTheme;
+        baseTheme = _lightTheme;
+        break;
       case AppThemeType.dark:
-        return _darkTheme;
+        baseTheme = _darkTheme;
+        break;
       case AppThemeType.minty:
-        return _mintyTheme;
+        baseTheme = _mintyTheme;
+        break;
       case AppThemeType.ocean:
-        return _oceanTheme;
+        baseTheme = _oceanTheme;
+        break;
       case AppThemeType.midday:
-        return _sunsetTheme;
+        baseTheme = _sunsetTheme;
+        break;
       case AppThemeType.sunset:
-        return _sunsetOrangeTheme;
+        baseTheme = _sunsetOrangeTheme;
+        break;
       case AppThemeType.mintyLegacy:
-        return _mintyLegacyTheme;
+        baseTheme = _mintyLegacyTheme;
+        break;
     }
+
+    // Ensure all font sizes are non-null before applying the scale factor.
+    final defaultTextTheme = Typography.material2021(platform: TargetPlatform.android).black;
+    final textThemeWithDefaults = defaultTextTheme.merge(baseTheme.textTheme);
+
+    return baseTheme.copyWith(
+      textTheme: textThemeWithDefaults.apply(fontSizeFactor: fontScaleFactor),
+    );
   }
 
   static ThemeData get _lightTheme {

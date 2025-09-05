@@ -70,59 +70,63 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Build your own",
-                  style: TextStyle(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.7),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Build your own",
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.7),
+                    ),
                   ),
-                ),
-                Text(
-                  "Question Paper",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-              ],
-            ),
-            SizedBox(height: 20),
-            _buildFeatureCard(
-              context: context,
-              icon: Icons.add,
-              title: 'Create New Form',
-              description: 'Start building a new form from scratch.',
-              onTap: () => context.push('/form-builder'),
-            ),
-            const SizedBox(height: 24),
-            _buildFeatureCard(
-              context: context,
-              icon: Icons.list_alt,
-              title: 'View Saved Forms',
-              description: 'Access and manage your previously created forms.',
-              onTap: () => context.push('/saved-forms'),
-            ),
-          ],
+                  Text(
+                    "Question Paper",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              _buildFeatureCard(
+                context: context,
+                icon: Icons.add,
+                title: 'Create New Form',
+                description: 'Start building a new form from scratch.',
+                onTap: () => context.push('/form-builder'),
+              ),
+              const SizedBox(height: 24),
+              _buildFeatureCard(
+                context: context,
+                icon: Icons.list_alt,
+                title: 'View Saved Forms',
+                description: 'Access and manage your previously created forms.',
+                onTap: () => context.push('/saved-forms'),
+              ),
+            ],
+          ),
         ),
       ),
-      bottomNavigationBar: TextButton(
-        onPressed: _cycleTip,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            'Tip: ${Tips.tips[_currentTipIndex]}',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-              fontStyle: FontStyle.italic,
+      bottomNavigationBar: SafeArea(
+        child: TextButton(
+          onPressed: _cycleTip,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Tip: ${Tips.tips[_currentTipIndex]}',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ),
         ),

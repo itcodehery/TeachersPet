@@ -65,10 +65,9 @@ Future<Uint8List> generateQuestionPaperPdf(SavedForm form) async {
     pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.all(32),
-      header: (context) => _buildHeader(form, logoImage),
+      // header: (context) => _buildHeader(form, logoImage),
       build: (context) => [
-        pw.Divider(),
-        // pw.SizedBox(height: 20),
+        _buildHeader(form, logoImage),
         ...form.questions.map(
           (q) => _buildQuestionWidget(q, counter, mainCounter),
         ),
