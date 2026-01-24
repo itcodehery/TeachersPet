@@ -12,6 +12,38 @@ enum QuestionType {
   table,
 }
 
+class QuestionImage {
+  final String path;
+  final String alignment; // 'left', 'center', 'right'
+  final double width; // 0.1 to 1.0 (10% to 100%)
+
+  QuestionImage({
+    required this.path,
+    this.alignment = 'center',
+    this.width = 1.0,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'path': path,
+    'alignment': alignment,
+    'width': width,
+  };
+
+  factory QuestionImage.fromJson(Map<String, dynamic> json) => QuestionImage(
+    path: json['path'],
+    alignment: json['alignment'] ?? 'center',
+    width: (json['width'] as num?)?.toDouble() ?? 1.0,
+  );
+
+  QuestionImage copyWith({String? path, String? alignment, double? width}) {
+    return QuestionImage(
+      path: path ?? this.path,
+      alignment: alignment ?? this.alignment,
+      width: width ?? this.width,
+    );
+  }
+}
+
 class Question {
   final String id;
   final String title;
@@ -20,8 +52,10 @@ class Question {
   final String? marks; // For section divider
   final String? sectionTitle; // For section divider
   final List<Question>? subQuestions; // For groupedQuestions
-  final List<String>?
-  imagePaths; // For questionWithImage and groupedQuestionWithImage
+  // Deprecated: imagePaths, use images instead
+  final List<String>? imagePaths;
+  final List<QuestionImage>?
+  images; // For questionWithImage and groupedQuestionWithImage
   final List<List<String>>? tableData; // For table
 
   Question({
@@ -33,6 +67,7 @@ class Question {
     this.sectionTitle,
     this.subQuestions,
     this.imagePaths,
+    this.images,
     this.tableData,
   });
 
@@ -44,25 +79,44 @@ class Question {
     'marks': marks,
     'sectionTitle': sectionTitle,
     'subQuestions': subQuestions?.map((q) => q.toJson()).toList(),
-    'imagePaths': imagePaths,
+    'images': images?.map((i) => i.toJson()).toList(),
     'tableData': tableData,
+    // Keep imagePaths null in JSON to avoid duplication, migration should be one-way
   };
 
-  factory Question.fromJson(Map<String, dynamic> json) => Question(
-    id: json['id'],
-    title: json['title'],
-    type: QuestionTypeExtension.fromString(json['type']),
-    options: (json['options'] as List?)?.map((e) => e as String).toList(),
-    marks: json['marks'],
-    sectionTitle: json['sectionTitle'],
-    subQuestions: (json['subQuestions'] as List?)
-        ?.map((q) => Question.fromJson(q as Map<String, dynamic>))
-        .toList(),
-    imagePaths: (json['imagePaths'] as List?)?.map((e) => e as String).toList(),
-    tableData: (json['tableData'] as List?)
-        ?.map((row) => (row as List).map((cell) => cell as String).toList())
-        .toList(),
-  );
+  factory Question.fromJson(Map<String, dynamic> json) {
+    // Handle migration from old imagePaths to new images list
+    List<QuestionImage>? loadedImages;
+
+    if (json['images'] != null) {
+      loadedImages = (json['images'] as List)
+          .map((i) => QuestionImage.fromJson(i as Map<String, dynamic>))
+          .toList();
+    } else if (json['imagePaths'] != null) {
+      // Backward compatibility: Convert strings to QuestionImage objects
+      loadedImages = (json['imagePaths'] as List)
+          .map((path) => QuestionImage(path: path as String))
+          .toList();
+    }
+
+    return Question(
+      id: json['id'],
+      title: json['title'],
+      type: QuestionTypeExtension.fromString(json['type']),
+      options: (json['options'] as List?)?.map((e) => e as String).toList(),
+      marks: json['marks'],
+      sectionTitle: json['sectionTitle'],
+      subQuestions: (json['subQuestions'] as List?)
+          ?.map((q) => Question.fromJson(q as Map<String, dynamic>))
+          .toList(),
+      images: loadedImages,
+      // We don't populate imagePaths anymore, prefer images
+      imagePaths: null,
+      tableData: (json['tableData'] as List?)
+          ?.map((row) => (row as List).map((cell) => cell as String).toList())
+          .toList(),
+    );
+  }
 
   Question copyWith({
     String? id,
@@ -72,7 +126,7 @@ class Question {
     String? marks,
     String? sectionTitle,
     List<Question>? subQuestions,
-    List<String>? imagePaths,
+    List<QuestionImage>? images,
     List<List<String>>? tableData,
   }) {
     return Question(
@@ -83,7 +137,8 @@ class Question {
       marks: marks ?? this.marks,
       sectionTitle: sectionTitle ?? this.sectionTitle,
       subQuestions: subQuestions ?? this.subQuestions,
-      imagePaths: imagePaths ?? this.imagePaths,
+      images: images ?? this.images,
+      imagePaths: null, // Always null on copy to enforce migration
       tableData: tableData ?? this.tableData,
     );
   }

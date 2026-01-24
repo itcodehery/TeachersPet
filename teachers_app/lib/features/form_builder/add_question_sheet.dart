@@ -18,36 +18,49 @@ class AddQuestionSheet extends ConsumerStatefulWidget {
 class _AddQuestionSheetState extends ConsumerState<AddQuestionSheet> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _titleController;
-  String? _title;
-  QuestionType _type = QuestionType.shortAnswer;
+  late QuestionType _type;
   List<String> _options = [];
-  String _optionInput = '';
+  final _optionController = TextEditingController();
   List<MapEntry<String, String>> _pairs = [];
-  String _pairKey = '';
-  String _pairValue = '';
+  final _pairKeyController = TextEditingController();
+  final _pairValueController = TextEditingController();
   String? _marks;
   String? _sectionTitle;
   List<String> _subQuestions = [];
-  String _subQuestionInput = '';
+  final _subQuestionController = TextEditingController();
   String? _editingId;
-  List<String> _imagePaths = [];
+  List<QuestionImage> _images = [];
   int _rows = 2;
   int _cols = 2;
   List<List<TextEditingController>> _tableControllers = [];
+
+  // New state for workflow
+  bool _isSelectingType = true;
 
   @override
   void initState() {
     super.initState();
     final q = widget.initialQuestion;
     _titleController = TextEditingController(text: q?.title ?? '');
+
     if (q != null) {
+      // Editing mode - skip selection
+      _isSelectingType = false;
       _editingId = q.id;
       _type = q.type;
-      _title = q.title;
       _options = q.options ?? [];
       _marks = q.marks;
       _sectionTitle = q.sectionTitle;
-      _imagePaths = q.imagePaths ?? [];
+
+      // Load images (handling legacy paths if any, via model logic, but here we expect model to have handled it)
+      // Actually accessing the deprecated imagePaths might be needed if migration didn't happen yet,
+      // but the model's fromJson handles migration. When passing object directly, we should check both.
+      if (q.images != null) {
+        _images = List.from(q.images!);
+      } else if (q.imagePaths != null) {
+        _images = q.imagePaths!.map((p) => QuestionImage(path: p)).toList();
+      }
+
       if (q.type == QuestionType.matchTheFollowing && q.options != null) {
         _pairs = q.options!.map((e) {
           final parts = e.split('=');
@@ -69,8 +82,11 @@ class _AddQuestionSheetState extends ConsumerState<AddQuestionSheet> {
           }
         }
       }
-    }
-    if (widget.initialQuestion == null) {
+    } else {
+      // Adding new - start with selection
+      _isSelectingType = true;
+      _type =
+          QuestionType.shortAnswer; // Default, but won't be used until selected
       _initializeTableControllers();
     }
   }
@@ -85,6 +101,10 @@ class _AddQuestionSheetState extends ConsumerState<AddQuestionSheet> {
   @override
   void dispose() {
     _titleController.dispose();
+    _optionController.dispose();
+    _pairKeyController.dispose();
+    _pairValueController.dispose();
+    _subQuestionController.dispose();
     for (var row in _tableControllers) {
       for (var controller in row) {
         controller.dispose();
@@ -98,7 +118,23 @@ class _AddQuestionSheetState extends ConsumerState<AddQuestionSheet> {
     final pickedFiles = await picker.pickMultiImage();
     if (pickedFiles.isNotEmpty) {
       setState(() {
-        _imagePaths.addAll(pickedFiles.map((file) => file.path));
+        _images.addAll(
+          pickedFiles.map((file) => QuestionImage(path: file.path)),
+        );
+      });
+    }
+  }
+
+  Future<void> _editImage(int index) async {
+    final image = _images[index];
+    final result = await showDialog<QuestionImage?>(
+      context: context,
+      builder: (context) => _ImageEditorDialog(image: image),
+    );
+
+    if (result != null) {
+      setState(() {
+        _images[index] = result;
       });
     }
   }
@@ -107,24 +143,59 @@ class _AddQuestionSheetState extends ConsumerState<AddQuestionSheet> {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: _imagePaths.map((path) {
+      children: _images.asMap().entries.map((entry) {
+        final index = entry.key;
+        final image = entry.value;
         return Stack(
           children: [
-            Image.file(File(path), width: 100, height: 100, fit: BoxFit.cover),
+            GestureDetector(
+              onTap: () => _editImage(index),
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    File(image.path),
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
             Positioned(
-              top: 0,
-              right: 0,
+              top: 4,
+              right: 4,
               child: GestureDetector(
                 onTap: () {
                   setState(() {
-                    _imagePaths.remove(path);
+                    _images.removeAt(index);
                   });
                 },
                 child: CircleAvatar(
-                  radius: 12,
-                  backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                  child: Icon(Icons.close, color: Theme.of(context).colorScheme.surface, size: 16),
+                  radius: 10,
+                  backgroundColor: Colors.black54,
+                  child: const Icon(Icons.close, color: Colors.white, size: 14),
                 ),
+              ),
+            ),
+            Positioned(
+              bottom: 4,
+              right: 4,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Icon(Icons.edit, color: Colors.white, size: 12),
               ),
             ),
           ],
@@ -145,6 +216,13 @@ class _AddQuestionSheetState extends ConsumerState<AddQuestionSheet> {
           label: const Text('Select Images'),
         ),
         const SizedBox(height: 8),
+        if (_images.isNotEmpty) ...[
+          const Text(
+            'Tap on an image to edit position and size',
+            style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+          ),
+          const SizedBox(height: 8),
+        ],
         _buildImagePreviews(),
       ],
     );
@@ -159,19 +237,19 @@ class _AddQuestionSheetState extends ConsumerState<AddQuestionSheet> {
           children: [
             Expanded(
               child: TextFormField(
+                controller: _subQuestionController,
                 decoration: const InputDecoration(
                   hintText: 'Enter subquestion',
                 ),
-                onChanged: (val) => _subQuestionInput = val,
               ),
             ),
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: () {
-                if (_subQuestionInput.trim().isNotEmpty) {
+                if (_subQuestionController.text.trim().isNotEmpty) {
                   setState(() {
-                    _subQuestions.add(_subQuestionInput.trim());
-                    _subQuestionInput = '';
+                    _subQuestions.add(_subQuestionController.text.trim());
+                    _subQuestionController.clear();
                   });
                 }
               },
@@ -211,17 +289,17 @@ class _AddQuestionSheetState extends ConsumerState<AddQuestionSheet> {
           children: [
             Expanded(
               child: TextFormField(
+                controller: _optionController,
                 decoration: const InputDecoration(hintText: 'Enter option'),
-                onChanged: (val) => _optionInput = val,
               ),
             ),
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: () {
-                if (_optionInput.trim().isNotEmpty) {
+                if (_optionController.text.trim().isNotEmpty) {
                   setState(() {
-                    _options.add(_optionInput.trim());
-                    _optionInput = '';
+                    _options.add(_optionController.text.trim());
+                    _optionController.clear();
                   });
                 }
               },
@@ -256,26 +334,31 @@ class _AddQuestionSheetState extends ConsumerState<AddQuestionSheet> {
           children: [
             Expanded(
               child: TextFormField(
+                controller: _pairKeyController,
                 decoration: const InputDecoration(hintText: 'Key'),
-                onChanged: (val) => _pairKey = val,
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: TextFormField(
+                controller: _pairValueController,
                 decoration: const InputDecoration(hintText: 'Value'),
-                onChanged: (val) => _pairValue = val,
               ),
             ),
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: () {
-                if (_pairKey.trim().isNotEmpty &&
-                    _pairValue.trim().isNotEmpty) {
+                if (_pairKeyController.text.trim().isNotEmpty &&
+                    _pairValueController.text.trim().isNotEmpty) {
                   setState(() {
-                    _pairs.add(MapEntry(_pairKey.trim(), _pairValue.trim()));
-                    _pairKey = '';
-                    _pairValue = '';
+                    _pairs.add(
+                      MapEntry(
+                        _pairKeyController.text.trim(),
+                        _pairValueController.text.trim(),
+                      ),
+                    );
+                    _pairKeyController.clear();
+                    _pairValueController.clear();
                   });
                 }
               },
@@ -385,12 +468,355 @@ class _AddQuestionSheetState extends ConsumerState<AddQuestionSheet> {
       case QuestionType.questionWithImage:
         return 'Question with Image';
       case QuestionType.groupedQuestionWithImage:
-        return 'Grouped Question with Image';
+        return 'Grouped + Image';
       case QuestionType.mainDivider:
         return 'Main Divider';
       case QuestionType.table:
         return 'Table';
     }
+  }
+
+  IconData getTypeIcon(QuestionType q) {
+    switch (q) {
+      case QuestionType.shortAnswer:
+        return Icons.short_text;
+      case QuestionType.longAnswer:
+        return Icons.notes;
+      case QuestionType.multipleChoice:
+        return Icons.list;
+      case QuestionType.matchTheFollowing:
+        return Icons.compare_arrows;
+      case QuestionType.sectionDivider:
+        return Icons.horizontal_rule;
+      case QuestionType.groupedQuestions:
+        return Icons.format_list_numbered;
+      case QuestionType.fillInTheBlanks:
+        return Icons.more_horiz;
+      case QuestionType.questionWithImage:
+        return Icons.image;
+      case QuestionType.groupedQuestionWithImage:
+        return Icons.photo_library;
+      case QuestionType.mainDivider:
+        return Icons.horizontal_split;
+      case QuestionType.table:
+        return Icons.table_chart;
+    }
+  }
+
+  Widget _buildTypeSelectionScreen() {
+    final categories = {
+      'Text & Input': [
+        QuestionType.shortAnswer,
+        QuestionType.longAnswer,
+        QuestionType.fillInTheBlanks,
+      ],
+      'Choice & Matching': [
+        QuestionType.multipleChoice,
+        QuestionType.matchTheFollowing,
+      ],
+      'Structure': [
+        QuestionType.sectionDivider,
+        QuestionType.mainDivider,
+        QuestionType.table,
+      ],
+      'Media & Groups': [
+        QuestionType.questionWithImage,
+        QuestionType.groupedQuestions,
+        QuestionType.groupedQuestionWithImage,
+      ],
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(
+            'Select Question Type',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+        ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: categories.entries.map((entry) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      entry.key,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 2.5,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
+                    itemCount: entry.value.length,
+                    itemBuilder: (context, index) {
+                      final type = entry.value[index];
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            _type = type;
+                            _isSelectingType = false;
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outlineVariant,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            color: Theme.of(context).colorScheme.surface,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(getTypeIcon(type), size: 20),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  getTypeNameFromQuestion(type),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFormScreen() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              if (widget.initialQuestion == null)
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => setState(() => _isSelectingType = true),
+                ),
+              Expanded(
+                child: Text(
+                  widget.initialQuestion == null
+                      ? 'New ${getTypeNameFromQuestion(_type)}'
+                      : 'Edit Node',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Question Inputs based on _type
+          if (_type == QuestionType.mainDivider)
+            TextFormField(
+              initialValue: _sectionTitle,
+              decoration: const InputDecoration(labelText: 'Main Title'),
+              validator: (val) =>
+                  val == null || val.trim().isEmpty ? 'Required' : null,
+              onChanged: (val) => setState(() => _sectionTitle = val),
+            ),
+          if (_type == QuestionType.mainDivider)
+            TextFormField(
+              initialValue: _marks,
+              decoration: const InputDecoration(labelText: 'Marks'),
+              validator: (val) =>
+                  val == null || val.trim().isEmpty ? 'Required' : null,
+              onChanged: (val) => setState(() => _marks = val),
+            ),
+          if (_type != QuestionType.sectionDivider &&
+              _type != QuestionType.mainDivider)
+            TextFormField(
+              controller: _titleController,
+              decoration: InputDecoration(
+                labelText:
+                    (_type == QuestionType.groupedQuestions ||
+                        _type == QuestionType.groupedQuestionWithImage)
+                    ? 'Main Question Title (optional)'
+                    : 'Question Title',
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.functions),
+                  onPressed: () async {
+                    final fraction = await showDialog<String>(
+                      context: context,
+                      builder: (context) => const FractionInputDialog(),
+                    );
+                    if (fraction != null) {
+                      final currentText = _titleController.text;
+                      final selection = _titleController.selection;
+                      final newText = currentText.replaceRange(
+                        selection.start,
+                        selection.end,
+                        fraction,
+                      );
+                      _titleController.text = newText;
+                      _titleController.selection = TextSelection.fromPosition(
+                        TextPosition(offset: selection.start + fraction.length),
+                      );
+                    }
+                  },
+                ),
+              ),
+              validator:
+                  (_type != QuestionType.groupedQuestions &&
+                      _type != QuestionType.groupedQuestionWithImage)
+                  ? (val) =>
+                        val == null || val.trim().isEmpty ? 'Required' : null
+                  : null,
+            ),
+          if (_type == QuestionType.multipleChoice) _buildOptionsInput(),
+          if (_type == QuestionType.matchTheFollowing) _buildPairsInput(),
+          if (_type == QuestionType.table) _buildTableInput(),
+          if (_type == QuestionType.groupedQuestions ||
+              _type == QuestionType.groupedQuestionWithImage)
+            _buildSubQuestionsInput(),
+          if (_type == QuestionType.questionWithImage ||
+              _type == QuestionType.groupedQuestionWithImage)
+            _buildImagePicker(),
+          if (_type == QuestionType.sectionDivider)
+            TextFormField(
+              initialValue: _sectionTitle,
+              decoration: InputDecoration(
+                labelText: _type == QuestionType.mainDivider
+                    ? 'Main Title'
+                    : 'Section Title',
+              ),
+              validator: (val) =>
+                  val == null || val.trim().isEmpty ? 'Required' : null,
+              onChanged: (val) => setState(() => _sectionTitle = val),
+            ),
+          if (_type == QuestionType.sectionDivider)
+            TextFormField(
+              initialValue: _marks,
+              decoration: const InputDecoration(labelText: 'Marks'),
+              validator: (val) =>
+                  val == null || val.trim().isEmpty ? 'Required' : null,
+              onChanged: (val) => setState(() => _marks = val),
+            ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => context.pop(),
+                child: const Text('Cancel'),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                ),
+                onPressed: () {
+                  if (_formKey.currentState?.validate() ?? false) {
+                    final question = Question(
+                      id:
+                          _editingId ??
+                          DateTime.now().millisecondsSinceEpoch.toString(),
+                      title:
+                          (_type == QuestionType.sectionDivider ||
+                              _type == QuestionType.mainDivider)
+                          ? _sectionTitle ?? ''
+                          : _titleController.text,
+                      type: _type,
+                      options: _type == QuestionType.multipleChoice
+                          ? _options
+                          : _type == QuestionType.matchTheFollowing
+                          ? _pairs.map((e) => '${e.key}=${e.value}').toList()
+                          : null,
+                      marks:
+                          (_type == QuestionType.sectionDivider ||
+                              _type == QuestionType.mainDivider)
+                          ? _marks
+                          : null,
+                      sectionTitle:
+                          (_type == QuestionType.sectionDivider ||
+                              _type == QuestionType.mainDivider)
+                          ? _sectionTitle
+                          : null,
+                      subQuestions:
+                          (_type == QuestionType.groupedQuestions ||
+                              _type == QuestionType.groupedQuestionWithImage)
+                          ? _subQuestions
+                                .map(
+                                  (subQ) => Question(
+                                    id: DateTime.now().millisecondsSinceEpoch
+                                        .toString(),
+                                    title: subQ,
+                                    type: QuestionType.shortAnswer,
+                                  ),
+                                )
+                                .toList()
+                          : null,
+                      images:
+                          (_type == QuestionType.questionWithImage ||
+                              _type == QuestionType.groupedQuestionWithImage)
+                          ? _images
+                          : null,
+                      tableData: _type == QuestionType.table
+                          ? _tableControllers
+                                .map(
+                                  (row) => row
+                                      .map((controller) => controller.text)
+                                      .toList(),
+                                )
+                                .toList()
+                          : null,
+                    );
+
+                    if (widget.initialQuestion != null) {
+                      ref
+                          .read(formBuilderProvider.notifier)
+                          .updateQuestion(question);
+                    } else {
+                      ref
+                          .read(formBuilderProvider.notifier)
+                          .addQuestion(question);
+                    }
+
+                    context.pop();
+                  }
+                },
+                child: Text(widget.initialQuestion != null ? 'Save' : 'Add'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -402,218 +828,150 @@ class _AddQuestionSheetState extends ConsumerState<AddQuestionSheet> {
         top: 16,
         bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _isSelectingType
+            ? SizedBox(
+                height: MediaQuery.of(context).size.height * 0.7,
+                child: _buildTypeSelectionScreen(),
+              )
+            : SingleChildScrollView(child: _buildFormScreen()),
+      ),
+    );
+  }
+}
+
+class _ImageEditorDialog extends StatefulWidget {
+  final QuestionImage image;
+  const _ImageEditorDialog({required this.image});
+
+  @override
+  State<_ImageEditorDialog> createState() => _ImageEditorDialogState();
+}
+
+class _ImageEditorDialogState extends State<_ImageEditorDialog> {
+  late String _alignment;
+  late double _width;
+
+  @override
+  void initState() {
+    super.initState();
+    _alignment = widget.image.alignment;
+    _width = widget.image.width;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Image'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Alignment'),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                _buildAlignButton('Left', 'left', Icons.align_horizontal_left),
+                _buildAlignButton(
+                  'Center',
+                  'center',
+                  Icons.align_horizontal_center,
+                ),
+                _buildAlignButton(
+                  'Right',
+                  'right',
+                  Icons.align_horizontal_right,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text('Size: ${(_width * 100).toInt()}%'),
+            Slider(
+              value: _width,
+              min: 0.1,
+              max: 1.0,
+              divisions: 9,
+              label: '${(_width * 100).toInt()}%',
+              onChanged: (val) => setState(() => _width = val),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                ),
+                child: Align(
+                  alignment: _alignment == 'left'
+                      ? Alignment.centerLeft
+                      : _alignment == 'right'
+                      ? Alignment.centerRight
+                      : Alignment.center,
+                  child: FractionallySizedBox(
+                    widthFactor: _width,
+                    child: Image.file(
+                      File(widget.image.path),
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => context.pop(), child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: () {
+            context.pop(
+              widget.image.copyWith(alignment: _alignment, width: _width),
+            );
+          },
+          child: const Text('Apply'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAlignButton(String label, String value, IconData icon) {
+    final isSelected = _alignment == value;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _alignment = value),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Theme.of(context).colorScheme.primaryContainer
+                : null,
+            border: Border.all(
+              color: isSelected
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.grey.shade300,
+            ),
+          ),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
+              Icon(
+                icon,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.grey,
+              ),
+              const SizedBox(height: 4),
               Text(
-                widget.initialQuestion == null ? 'Add Node' : 'Edit Node',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<QuestionType>(
-                initialValue: _type,
-                decoration: const InputDecoration(labelText: 'Question Type'),
-                items: QuestionType.values
-                    .map(
-                      (type) => DropdownMenuItem(
-                        value: type,
-                        child: Text(getTypeNameFromQuestion(type)),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (type) =>
-                    setState(() => _type = type ?? QuestionType.shortAnswer),
-              ),
-              const SizedBox(height: 16),
-              if (_type == QuestionType.mainDivider)
-                TextFormField(
-                  initialValue: _sectionTitle,
-                  decoration: const InputDecoration(labelText: 'Main Title'),
-                  validator: (val) =>
-                      val == null || val.trim().isEmpty ? 'Required' : null,
-                  onChanged: (val) => setState(() => _sectionTitle = val),
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
+                      : Colors.grey,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
-              if (_type == QuestionType.mainDivider)
-                TextFormField(
-                  initialValue: _marks,
-                  decoration: const InputDecoration(labelText: 'Marks'),
-                  validator: (val) =>
-                      val == null || val.trim().isEmpty ? 'Required' : null,
-                  onChanged: (val) => setState(() => _marks = val),
-                ),
-              if (_type != QuestionType.sectionDivider &&
-                  _type != QuestionType.mainDivider)
-                TextFormField(
-                  controller: _titleController,
-                  decoration: InputDecoration(
-                    labelText:
-                        (_type == QuestionType.groupedQuestions ||
-                            _type == QuestionType.groupedQuestionWithImage)
-                        ? 'Main Question Title (optional)'
-                        : 'Question Title',
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.functions),
-                      onPressed: () async {
-                        final fraction = await showDialog<String>(
-                          context: context,
-                          builder: (context) => const FractionInputDialog(),
-                        );
-                        if (fraction != null) {
-                          final currentText = _titleController.text;
-                          final selection = _titleController.selection;
-                          final newText = currentText.replaceRange(
-                            selection.start,
-                            selection.end,
-                            fraction,
-                          );
-                          _titleController.text = newText;
-                          _titleController.selection =
-                              TextSelection.fromPosition(
-                                TextPosition(
-                                  offset: selection.start + fraction.length,
-                                ),
-                              );
-                        }
-                      },
-                    ),
-                  ),
-                  validator:
-                      (_type != QuestionType.groupedQuestions &&
-                          _type != QuestionType.groupedQuestionWithImage)
-                      ? (val) => val == null || val.trim().isEmpty
-                            ? 'Required'
-                            : null
-                      : null,
-                  onChanged: (val) => setState(() => _title = val),
-                ),
-              if (_type == QuestionType.multipleChoice) _buildOptionsInput(),
-              if (_type == QuestionType.matchTheFollowing) _buildPairsInput(),
-              if (_type == QuestionType.table) _buildTableInput(),
-              if (_type == QuestionType.groupedQuestions ||
-                  _type == QuestionType.groupedQuestionWithImage)
-                _buildSubQuestionsInput(),
-              if (_type == QuestionType.questionWithImage ||
-                  _type == QuestionType.groupedQuestionWithImage)
-                _buildImagePicker(),
-              if (_type == QuestionType.sectionDivider)
-                TextFormField(
-                  initialValue: _sectionTitle,
-                  decoration: InputDecoration(
-                    labelText: _type == QuestionType.mainDivider
-                        ? 'Main Title'
-                        : 'Section Title',
-                  ),
-                  validator: (val) =>
-                      val == null || val.trim().isEmpty ? 'Required' : null,
-                  onChanged: (val) => setState(() => _sectionTitle = val),
-                ),
-              if (_type == QuestionType.sectionDivider)
-                TextFormField(
-                  initialValue: _marks,
-                  decoration: const InputDecoration(labelText: 'Marks'),
-                  validator: (val) =>
-                      val == null || val.trim().isEmpty ? 'Required' : null,
-                  onChanged: (val) => setState(() => _marks = val),
-                ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => context.pop(),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                    ),
-                    onPressed: () {
-                      if (_formKey.currentState?.validate() ?? false) {
-                        final question = Question(
-                          id:
-                              _editingId ??
-                              DateTime.now().millisecondsSinceEpoch.toString(),
-                          title:
-                              (_type == QuestionType.sectionDivider ||
-                                  _type == QuestionType.mainDivider)
-                              ? _sectionTitle ?? ''
-                              : _titleController.text, // Use controller text
-                          type: _type,
-                          options: _type == QuestionType.multipleChoice
-                              ? _options
-                              : _type == QuestionType.matchTheFollowing
-                              ? _pairs
-                                    .map((e) => '${e.key}=${e.value}')
-                                    .toList()
-                              : null,
-                          marks:
-                              (_type == QuestionType.sectionDivider ||
-                                  _type == QuestionType.mainDivider)
-                              ? _marks
-                              : null,
-                          sectionTitle:
-                              (_type == QuestionType.sectionDivider ||
-                                  _type == QuestionType.mainDivider)
-                              ? _sectionTitle
-                              : null,
-                          subQuestions:
-                              (_type == QuestionType.groupedQuestions ||
-                                  _type ==
-                                      QuestionType.groupedQuestionWithImage)
-                              ? _subQuestions
-                                    .map(
-                                      (subQ) => Question(
-                                        id: DateTime.now()
-                                            .millisecondsSinceEpoch
-                                            .toString(),
-                                        title: subQ,
-                                        type: QuestionType.shortAnswer,
-                                      ),
-                                    )
-                                    .toList()
-                              : null,
-                          imagePaths:
-                              (_type == QuestionType.questionWithImage ||
-                                  _type ==
-                                      QuestionType.groupedQuestionWithImage)
-                              ? _imagePaths
-                              : null,
-                          tableData: _type == QuestionType.table
-                              ? _tableControllers
-                                    .map(
-                                      (row) => row
-                                          .map((controller) => controller.text)
-                                          .toList(),
-                                    )
-                                    .toList()
-                              : null,
-                        );
-
-                        if (widget.initialQuestion != null) {
-                          ref
-                              .read(formBuilderProvider.notifier)
-                              .updateQuestion(question);
-                        } else {
-                          ref
-                              .read(formBuilderProvider.notifier)
-                              .addQuestion(question);
-                        }
-
-                        context.pop();
-                      }
-                    },
-                    child: const Text('Add'),
-                  ),
-                ],
               ),
             ],
           ),

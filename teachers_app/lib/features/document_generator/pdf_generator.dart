@@ -467,7 +467,54 @@ pw.Widget _buildQuestionWidget(
       );
     case QuestionType.questionWithImage:
       List<pw.Widget> imageWidgets = [];
-      if (question.imagePaths != null && question.imagePaths!.isNotEmpty) {
+      if (question.images != null && question.images!.isNotEmpty) {
+        for (var img in question.images!) {
+          final image = pw.MemoryImage(File(img.path).readAsBytesSync());
+
+          final alignment = img.alignment == 'left'
+              ? pw.Alignment.centerLeft
+              : img.alignment == 'right'
+              ? pw.Alignment.centerRight
+              : pw.Alignment.center;
+
+          // pdf package doesn't have FractionallySizedBox.
+          // We can simulate width% by using a Container with constraints or just image width
+          // But pw.Image doesn't easily take percentage.
+          // An easy way is to wrap in a FullPage or use flexible, but inside a Column...
+          // We'll use a specific fixed height (since we had 200 before) and let width scale?
+          // Or better: Use AspectRatio constraint if we knew it.
+          // Simplest fallback for percentage width in a PDF column:
+          // Just use a Container with explicit width? We don't know page width here easily without Context.
+          // However, we can use a LayoutBuilder if needed, but that's complex.
+          // Let's just use the previous logic of height=200 but respecting alignment,
+          // OR if we really want width control, we might need a workaround.
+          // Workaround: We can't easily do % width without LayoutBuilder.
+          // But wait, the previous code used height=200.
+          // Let's stick to height=200 for now but apply alignment,
+          // OR try to apply scale? Scale reduces resolution visually.
+
+          // Actually, let's use a Container padding/width.
+          // If we want 50% width, we can't easily enforce it without layout context.
+          // BUT, for PDF, usually we just want it to not be HUGE.
+          // Let's try sticking to the old behavior for size (height 200) but respect alignment.
+          // AND for width control:
+          // If we want it smaller, we can reduce the height proportionally?
+          // Let's assume height 200 is "100%" (default).
+          // So width 0.5 -> height 100.
+
+          final targetHeight = 200.0 * img.width;
+
+          imageWidgets.add(
+            pw.Container(
+              alignment: alignment,
+              padding: const pw.EdgeInsets.symmetric(vertical: 8.0),
+              child: pw.SizedBox(height: targetHeight, child: pw.Image(image)),
+            ),
+          );
+        }
+      } else if (question.imagePaths != null &&
+          question.imagePaths!.isNotEmpty) {
+        // Fallback for old data
         for (var imagePath in question.imagePaths!) {
           final image = pw.MemoryImage(File(imagePath).readAsBytesSync());
           imageWidgets.add(
@@ -496,7 +543,40 @@ pw.Widget _buildQuestionWidget(
       );
     case QuestionType.groupedQuestionWithImage:
       List<pw.Widget> imageWidgets = [];
-      if (question.imagePaths != null && question.imagePaths!.isNotEmpty) {
+      if (question.images != null && question.images!.isNotEmpty) {
+        for (var img in question.images!) {
+          final image = pw.MemoryImage(File(img.path).readAsBytesSync());
+          // For grouped questions with side-by-side layout, we might want to
+          // force full width of the column, or respect the setting.
+          // Given the layout (flex 1 for image col, flex 2 for text),
+          // let's respect the alignment within that column.
+
+          final alignment = img.alignment == 'left'
+              ? pw.Alignment.centerLeft
+              : img.alignment == 'right'
+              ? pw.Alignment.centerRight
+              : pw.Alignment.center;
+
+          // Same logic: scale height
+          // Grouped images are usually smaller, maybe base height 150?
+          // Previous code didn't set height for grouped, just pw.Image(image) which takes intrinsic or max width.
+          // We can just use the width factor property to wrap it in a Container with width constraint?
+          // No, we can't get strict page width.
+          // Let's just use the scale to determine a constrained height to keep it simple and safe.
+          // Default grouped image behavior was just "fit in column".
+
+          imageWidgets.add(
+            pw.Container(
+              alignment: alignment,
+              child: pw.SizedBox(
+                height: 150 * img.width, // Rough heuristic
+                child: pw.Image(image),
+              ),
+            ),
+          );
+        }
+      } else if (question.imagePaths != null &&
+          question.imagePaths!.isNotEmpty) {
         for (var imagePath in question.imagePaths!) {
           final image = pw.MemoryImage(File(imagePath).readAsBytesSync());
           imageWidgets.add(pw.Image(image));

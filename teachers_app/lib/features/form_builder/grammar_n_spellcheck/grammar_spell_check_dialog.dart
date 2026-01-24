@@ -178,11 +178,6 @@ class _GrammarSpellCheckDialogState
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
                 ],
               ),
             ),
@@ -199,8 +194,9 @@ class _GrammarSpellCheckDialogState
                     bottom: Radius.circular(12),
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     OutlinedButton.icon(
                       onPressed: _totalSpellingErrors > 0
@@ -209,7 +205,7 @@ class _GrammarSpellCheckDialogState
                       icon: const Icon(Icons.abc),
                       label: Text('Correct Spelling ($_totalSpellingErrors)'),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(height: 8),
                     FilledButton.icon(
                       onPressed: _totalGrammarErrors > 0
                           ? _correctGrammar
@@ -306,11 +302,13 @@ class _GrammarSpellCheckDialogState
                   color: Theme.of(context).colorScheme.error,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  '$_totalSpellingErrors spelling, $_totalGrammarErrors grammar issues found',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                    fontWeight: FontWeight.w500,
+                Expanded(
+                  child: _MarqueeText(
+                    '$_totalSpellingErrors spelling, $_totalGrammarErrors grammar issues found',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],
@@ -419,6 +417,70 @@ class _GrammarSpellCheckDialogState
           ],
         ),
       ),
+    );
+  }
+}
+
+class _MarqueeText extends StatefulWidget {
+  final String text;
+  final TextStyle? style;
+
+  const _MarqueeText(this.text, {this.style});
+
+  @override
+  State<_MarqueeText> createState() => _MarqueeTextState();
+}
+
+class _MarqueeTextState extends State<_MarqueeText> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startScrolling());
+  }
+
+  void _startScrolling() async {
+    while (mounted) {
+      if (_scrollController.hasClients &&
+          _scrollController.position.maxScrollExtent > 0) {
+        await Future.delayed(const Duration(seconds: 1));
+        if (!mounted) break;
+        // Calculate duration based on length
+        final duration = Duration(
+          milliseconds: (_scrollController.position.maxScrollExtent * 30)
+              .round(),
+        );
+        await _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: duration,
+          curve: Curves.linear,
+        );
+        await Future.delayed(const Duration(seconds: 1));
+        if (!mounted) break;
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(0);
+        }
+      } else {
+        await Future.delayed(const Duration(seconds: 1));
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      controller: _scrollController,
+      scrollDirection: Axis.horizontal,
+      physics: const NeverScrollableScrollPhysics(),
+      child: Text(widget.text, style: widget.style),
     );
   }
 }
