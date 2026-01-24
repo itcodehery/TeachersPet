@@ -194,6 +194,54 @@ class SettingsPage extends ConsumerWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 24),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  // Auto-Save Interval
+                  Text(
+                    'Auto-Save Interval',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Automatically save your forms while editing',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha(150),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    value: accessibility.autoSaveInterval,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    items: AutoSaveInterval.options.map((interval) {
+                      return DropdownMenuItem<int>(
+                        value: interval,
+                        child: Text(AutoSaveInterval.getLabel(interval)),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        ref
+                            .read(accessibilityProvider.notifier)
+                            .setAutoSaveInterval(value);
+                      }
+                    },
+                  ),
                 ],
               ),
             ),

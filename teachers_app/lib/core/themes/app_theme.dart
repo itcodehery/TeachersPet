@@ -70,10 +70,10 @@ class AppTheme {
         foregroundColor: colorScheme.primary,
       ),
       scaffoldBackgroundColor: const Color(
-        0xFF1A2E1F,
-      ), // Dark mint-tinted background
+        0xFF0D1210,
+      ), // Almost black with subtle mint hint
       cardTheme: CardThemeData(
-        color: const Color(0xFF243328), // Dark mint card
+        color: const Color(0xFF151A17), // Very dark with subtle mint
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

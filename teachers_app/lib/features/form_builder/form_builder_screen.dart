@@ -18,6 +18,8 @@ import 'package:minty/features/form_builder/form_details_dialog.dart';
 import 'package:printing/printing.dart';
 import 'package:minty/widgets/app_snackbar.dart';
 import 'package:minty/features/form_builder/grammar_n_spellcheck/grammar_spell_check_dialog.dart';
+import 'dart:async';
+import 'package:minty/core/accessibility/accessibility_settings.dart';
 
 class FormBuilderScreen extends ConsumerStatefulWidget {
   final SavedForm? form;
@@ -30,14 +32,84 @@ class FormBuilderScreen extends ConsumerStatefulWidget {
 
 class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
   bool _isSpellChecking = false;
+  Timer? _autoSaveTimer;
+
   @override
   void initState() {
     super.initState();
     if (widget.form != null) {
-      // Use a post-frame callback to avoid modifying state during build.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(formBuilderProvider.notifier).loadForm(widget.form!);
       });
+    }
+    _setupAutoSave();
+  }
+
+  @override
+  void dispose() {
+    _autoSaveTimer?.cancel();
+    super.dispose();
+  }
+
+  void _setupAutoSave() {
+    final settings = ref.read(accessibilityProvider);
+    if (settings.autoSaveInterval > 0) {
+      _autoSaveTimer?.cancel();
+      _autoSaveTimer = Timer.periodic(
+        Duration(seconds: settings.autoSaveInterval),
+        (_) => _autoSave(),
+      );
+    }
+  }
+
+  Future<void> _autoSave() async {
+    final form = ref.read(formBuilderProvider);
+    if (form.questions.isNotEmpty) {
+      final savedForm = SavedForm(
+        id: widget.form?.id ?? DateTime.now().toIso8601String(),
+        name: form.name,
+        createdOn: widget.form?.createdOn ?? DateTime.now(),
+        lastModified: DateTime.now(),
+        questions: form.questions,
+        selectedHeaderId: form.selectedHeaderId,
+        instituteName: form.instituteName,
+        examTitle: form.examTitle,
+        subtitle: form.subtitle,
+        date: form.date,
+        duration: form.duration,
+        maxMarks: form.maxMarks,
+        subject: form.subject,
+        className: form.className,
+        customFieldValues: form.customFieldValues,
+      );
+
+      if (widget.form != null) {
+        // Update existing form
+        await SavedFormsService.deleteForm(widget.form!.id);
+        await SavedFormsService.addForm(savedForm);
+      } else {
+        // For new forms, only auto-save if we have an ID (which means it was saved at least once)
+        // or just quietly save it as a new draft?
+        // Let's adopt the behavior: if it's a new form, we don't auto-save until manual save to avoid clutter
+        // UNLESS we check if the user has already saved it once.
+        // For simplicity, let's only auto-save if we are editing an existing form (widget.form != null)
+        // OR if the user has manually saved it at least once (we'd need to track that).
+        // A safer bet is: only auto-save if widget.form != null to avoid creating junk files.
+        // BUT if users want auto-save on new forms, we should probably support it.
+        // Let's stick to updating existing forms for now to be safe.
+      }
+
+      // Actually, to make auto-save useful for new forms, we need to handle the case where it hasn't been saved yet.
+      // But creating a new file every 30s is bad if we don't have an ID.
+      // Let's just update existing forms for safety in this iteration.
+      if (widget.form != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Auto-saving...'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
     }
   }
 

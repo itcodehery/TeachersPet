@@ -2,7 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:minty/tips.dart';
+import 'package:minty/features/form_builder/saved_forms_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,11 +15,26 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentTipIndex = 0;
+  List<SavedForm> _recentForms = [];
+  bool _loadingForms = true;
 
   @override
   void initState() {
     super.initState();
     _currentTipIndex = Random().nextInt(Tips.tips.length);
+    _loadRecentForms();
+  }
+
+  Future<void> _loadRecentForms() async {
+    final forms = await SavedFormsService.loadForms();
+    // Sort by last modified (most recent first) and take top 5
+    forms.sort((a, b) => b.lastModified.compareTo(a.lastModified));
+    if (mounted) {
+      setState(() {
+        _recentForms = forms.take(5).toList();
+        _loadingForms = false;
+      });
+    }
   }
 
   void _cycleTip() {
@@ -57,10 +74,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Column(
@@ -72,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSurface.withOpacity(0.7),
+                    ).colorScheme.onSurface.withAlpha(180),
                   ),
                 ),
                 Text(
@@ -97,6 +113,23 @@ class _HomeScreenState extends State<HomeScreen> {
               description: 'Access and manage your previously created forms.',
               onTap: () => context.push('/saved-forms'),
             ),
+            const SizedBox(height: 32),
+            // Recent Forms Section
+            if (_recentForms.isNotEmpty || _loadingForms) ...[
+              Text(
+                'Recent Forms',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (_loadingForms)
+                const Center(child: CircularProgressIndicator())
+              else
+                ..._recentForms.map((form) => _buildRecentFormTile(form)),
+            ],
           ],
         ),
       ),
@@ -108,11 +141,39 @@ class _HomeScreenState extends State<HomeScreen> {
             'Tip: ${Tips.tips[_currentTipIndex]}',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              color: Theme.of(context).colorScheme.onSurface.withAlpha(150),
               fontStyle: FontStyle.italic,
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildRecentFormTile(SavedForm form) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: Icon(
+          Icons.description_outlined,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        title: Text(
+          form.name,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+        subtitle: Text(
+          'Modified ${DateFormat.yMMMd().format(form.lastModified)}',
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).colorScheme.onSurface.withAlpha(150),
+          ),
+        ),
+        trailing: Icon(
+          Icons.chevron_right,
+          color: Theme.of(context).colorScheme.onSurface.withAlpha(100),
+        ),
+        onTap: () => context.push('/form-builder', extra: form),
       ),
     );
   }
