@@ -63,6 +63,30 @@ class Question {
         ?.map((row) => (row as List).map((cell) => cell as String).toList())
         .toList(),
   );
+
+  Question copyWith({
+    String? id,
+    String? title,
+    QuestionType? type,
+    List<String>? options,
+    String? marks,
+    String? sectionTitle,
+    List<Question>? subQuestions,
+    List<String>? imagePaths,
+    List<List<String>>? tableData,
+  }) {
+    return Question(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      type: type ?? this.type,
+      options: options ?? this.options,
+      marks: marks ?? this.marks,
+      sectionTitle: sectionTitle ?? this.sectionTitle,
+      subQuestions: subQuestions ?? this.subQuestions,
+      imagePaths: imagePaths ?? this.imagePaths,
+      tableData: tableData ?? this.tableData,
+    );
+  }
 }
 
 extension QuestionTypeExtension on QuestionType {

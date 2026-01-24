@@ -17,7 +17,7 @@ import 'package:minty/features/form_builder/header_template_service.dart';
 import 'package:minty/features/form_builder/form_details_dialog.dart';
 import 'package:printing/printing.dart';
 import 'package:minty/widgets/app_snackbar.dart';
-import 'package:minty/features/form_builder/grammar_n_spellcheck/spellchecker.dart';
+import 'package:minty/features/form_builder/grammar_n_spellcheck/grammar_spell_check_dialog.dart';
 
 class FormBuilderScreen extends ConsumerStatefulWidget {
   final SavedForm? form;
@@ -142,53 +142,9 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
       },
       'Grammar & Spelling': (BuildContext context, WidgetRef ref) async {
         context.pop();
-        setState(() => _isSpellChecking = true);
-        await Future.delayed(const Duration(milliseconds: 100));
-        final allTexts = <String>[];
-        for (final q in form.questions) {
-          allTexts.add(q.title);
-          if (q.options != null) allTexts.addAll(q.options!);
-          if (q.subQuestions != null) {
-            for (final subQ in q.subQuestions!) {
-              allTexts.add(subQ.title);
-            }
-          }
-        }
-        SpellChecker.initSpellCheck();
-        final corrected = SpellChecker.correctText(allTexts);
-        setState(() => _isSpellChecking = false);
         showDialog(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Spell Check Results'),
-            content: SizedBox(
-              width: 300,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (int i = 0; i < allTexts.length; i++)
-                      Text(
-                        allTexts[i] == corrected[i]
-                            ? allTexts[i]
-                            : '${allTexts[i]} → ${corrected[i]}',
-                        style: TextStyle(
-                          color: allTexts[i] == corrected[i]
-                              ? Theme.of(context).colorScheme.onSurface
-                              : Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Close'),
-              ),
-            ],
-          ),
+          builder: (context) => const GrammarSpellCheckDialog(),
         );
       },
     };

@@ -29,6 +29,7 @@ dependencies:
   printing: ^5.11.1
   top_snackbar_flutter: ^3.3.0
   spell_check_on_client: ^1.0.0
+  language_tool: ^2.2.0
   shared_preferences: ^2.2.2
 
 dev_dependencies:
