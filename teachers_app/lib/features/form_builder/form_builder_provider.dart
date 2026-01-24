@@ -12,6 +12,7 @@ class FormBuilderNotifier extends StateNotifier<SavedForm> {
           createdOn: DateTime.now(),
           lastModified: DateTime.now(),
           questions: [],
+          selectedHeaderId: 'prebuilt_simple',
         ),
       );
 
@@ -58,6 +59,40 @@ class FormBuilderNotifier extends StateNotifier<SavedForm> {
 
   void updateFormName(String name) {
     state = state.copyWith(name: name, lastModified: DateTime.now());
+  }
+
+  void updateSelectedHeader(String headerId) {
+    state = state.copyWith(
+      selectedHeaderId: headerId,
+      lastModified: DateTime.now(),
+    );
+  }
+
+  void updateFormDetails({
+    String? name,
+    String? instituteName,
+    String? examTitle,
+    String? subtitle,
+    String? date,
+    String? duration,
+    String? maxMarks,
+    String? subject,
+    String? className,
+    Map<String, String>? customFieldValues,
+  }) {
+    state = state.copyWith(
+      name: name ?? state.name,
+      instituteName: instituteName,
+      examTitle: examTitle,
+      subtitle: subtitle,
+      date: date,
+      duration: duration,
+      maxMarks: maxMarks,
+      subject: subject,
+      className: className,
+      customFieldValues: customFieldValues,
+      lastModified: DateTime.now(),
+    );
   }
 }
 

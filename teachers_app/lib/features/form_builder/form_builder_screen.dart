@@ -12,6 +12,9 @@ import 'package:minty/features/form_builder/saved_forms_service.dart';
 import 'package:minty/features/document_generator/document_generator_bloc.dart';
 import 'package:minty/features/document_generator/document_generator_state.dart';
 import 'package:minty/features/document_generator/pdf_generator.dart';
+import 'package:minty/features/form_builder/header_selector_sheet.dart';
+import 'package:minty/features/form_builder/header_template_service.dart';
+import 'package:minty/features/form_builder/form_details_dialog.dart';
 import 'package:printing/printing.dart';
 import 'package:minty/widgets/app_snackbar.dart';
 import 'package:minty/features/form_builder/grammar_n_spellcheck/spellchecker.dart';
@@ -38,35 +41,10 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
     }
   }
 
-  void _showEditNameDialog(BuildContext context, String currentName) {
-    final controller = TextEditingController(text: currentName);
+  void _showFormDetailsDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Form Name'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: 'Form Name'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
-                ref
-                    .read(formBuilderProvider.notifier)
-                    .updateFormName(controller.text);
-                context.pop();
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+      builder: (context) => const FormDetailsDialog(),
     );
   }
 
@@ -95,14 +73,28 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
           builder: (context) => const AddQuestionSheet(),
         );
       },
-      'Export to PDF': (BuildContext context, WidgetRef ref) {
+      'Export to PDF': (BuildContext context, WidgetRef ref) async {
         if (form.questions.isEmpty) {
           AppSnackbar.showError(context, 'No questions to export!');
           return;
         }
+        final headerId = form.selectedHeaderId ?? 'prebuilt_simple';
+        final header = await HeaderTemplateService.getHeaderById(headerId);
         ref
             .read(documentGeneratorProvider.notifier)
-            .generateDocument(form.questions);
+            .generateDocument(
+              form.questions,
+              headerTemplate: header,
+              instituteName: form.instituteName,
+              examTitle: form.examTitle,
+              subtitle: form.subtitle,
+              date: form.date,
+              duration: form.duration,
+              maxMarks: form.maxMarks,
+              subject: form.subject,
+              className: form.className,
+              customFieldValues: form.customFieldValues,
+            );
       },
       'Preview': (BuildContext context, WidgetRef ref) async {
         if (form.questions.isEmpty) {
@@ -111,7 +103,21 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
         }
 
         AppSnackbar.showInfo(context, 'Generating preview...');
-        final pdfBytes = await generateQuestionPaperPdf(form.questions);
+        final headerId = form.selectedHeaderId ?? 'prebuilt_simple';
+        final header = await HeaderTemplateService.getHeaderById(headerId);
+        final pdfBytes = await generateQuestionPaperPdf(
+          form.questions,
+          headerTemplate: header,
+          instituteName: form.instituteName,
+          examTitle: form.examTitle,
+          subtitle: form.subtitle,
+          date: form.date,
+          duration: form.duration,
+          maxMarks: form.maxMarks,
+          subject: form.subject,
+          className: form.className,
+          customFieldValues: form.customFieldValues,
+        );
 
         Navigator.push(
           context,
@@ -125,6 +131,14 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
       },
       'Reset Form': (BuildContext context, WidgetRef ref) {
         ref.read(formBuilderProvider.notifier).clearQuestions();
+      },
+      'Choose Header': (BuildContext context, WidgetRef ref) {
+        context.pop();
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          builder: (context) => const HeaderSelectorSheet(),
+        );
       },
       'Grammar & Spelling': (BuildContext context, WidgetRef ref) async {
         context.pop();
@@ -184,6 +198,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
       'Preview': Icons.remove_red_eye,
       'Export to PDF': Icons.picture_as_pdf_outlined,
       'Reset Form': Icons.restore,
+      'Choose Header': Icons.description_outlined,
       'Grammar & Spelling': Icons.book_outlined,
     };
 
@@ -217,7 +232,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
                             children: [
                               TextButton(
                                 onPressed: () =>
-                                    _showEditNameDialog(context, form.name),
+                                    _showFormDetailsDialog(context),
                                 style: TextButton.styleFrom(
                                   backgroundColor: Theme.of(
                                     context,

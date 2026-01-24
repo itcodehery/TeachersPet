@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:minty/features/document_generator/document_generator_state.dart';
 import 'package:minty/features/form_builder/question_model.dart';
 import 'package:minty/features/document_generator/pdf_generator.dart';
+import 'package:minty/features/form_builder/header_template_model.dart';
 
 final documentGeneratorProvider =
     StateNotifierProvider<DocumentGeneratorNotifier, DocumentGeneratorState>((
@@ -17,10 +18,34 @@ final documentGeneratorProvider =
 class DocumentGeneratorNotifier extends StateNotifier<DocumentGeneratorState> {
   DocumentGeneratorNotifier() : super(DocumentInitial());
 
-  Future<void> generateDocument(List<Question> questions) async {
+  Future<void> generateDocument(
+    List<Question> questions, {
+    HeaderTemplate? headerTemplate,
+    String? instituteName,
+    String? examTitle,
+    String? subtitle,
+    String? date,
+    String? duration,
+    String? maxMarks,
+    String? subject,
+    String? className,
+    Map<String, String>? customFieldValues,
+  }) async {
     state = GeneratingDocument();
     try {
-      final pdfBytes = await generateQuestionPaperPdf(questions);
+      final pdfBytes = await generateQuestionPaperPdf(
+        questions,
+        headerTemplate: headerTemplate,
+        instituteName: instituteName,
+        examTitle: examTitle,
+        subtitle: subtitle,
+        date: date,
+        duration: duration,
+        maxMarks: maxMarks,
+        subject: subject,
+        className: className,
+        customFieldValues: customFieldValues,
+      );
 
       final Directory tempDir = await getTemporaryDirectory();
       final String filePath = '${tempDir.path}/question_paper.pdf';

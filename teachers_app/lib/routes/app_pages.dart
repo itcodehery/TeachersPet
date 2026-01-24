@@ -1,5 +1,7 @@
 import 'package:minty/features/home/presentation/pages/home_page.dart';
 import 'package:minty/features/settings/settings_page.dart';
+import 'package:minty/features/auth/presentation/pages/login_page.dart';
+import 'package:minty/features/auth/presentation/pages/signup_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'app_routes.dart';
@@ -8,9 +10,19 @@ import 'package:minty/features/form_builder/form_builder_screen.dart';
 import 'package:minty/features/home/saved_forms_screen.dart';
 
 final router = GoRouter(
-  initialLocation: '/home',
+  initialLocation: '/login',
   navigatorKey: GlobalNavigation.instance.navigatorKey,
   routes: [
+    GoRoute(
+      name: Names.login,
+      path: Routes.login,
+      builder: (context, state) => const LoginPage(),
+    ),
+    GoRoute(
+      name: Names.signup,
+      path: Routes.signup,
+      builder: (context, state) => const SignupPage(),
+    ),
     GoRoute(
       name: Names.home,
       path: Routes.home,

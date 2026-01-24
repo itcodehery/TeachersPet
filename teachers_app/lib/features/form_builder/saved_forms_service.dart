@@ -9,6 +9,17 @@ class SavedForm {
   final DateTime createdOn;
   final DateTime lastModified;
   final List<Question> questions;
+  final String? selectedHeaderId; // null = use default "Simple"
+  // Header content values (per-form)
+  final String? instituteName;
+  final String? examTitle;
+  final String? subtitle;
+  final String? date;
+  final String? duration;
+  final String? maxMarks;
+  final String? subject;
+  final String? className;
+  final Map<String, String> customFieldValues; // field name -> value
 
   SavedForm({
     required this.id,
@@ -16,6 +27,16 @@ class SavedForm {
     required this.createdOn,
     required this.lastModified,
     required this.questions,
+    this.selectedHeaderId,
+    this.instituteName,
+    this.examTitle,
+    this.subtitle,
+    this.date,
+    this.duration,
+    this.maxMarks,
+    this.subject,
+    this.className,
+    this.customFieldValues = const {},
   });
 
   SavedForm copyWith({
@@ -24,6 +45,16 @@ class SavedForm {
     DateTime? createdOn,
     DateTime? lastModified,
     List<Question>? questions,
+    String? selectedHeaderId,
+    String? instituteName,
+    String? examTitle,
+    String? subtitle,
+    String? date,
+    String? duration,
+    String? maxMarks,
+    String? subject,
+    String? className,
+    Map<String, String>? customFieldValues,
   }) {
     return SavedForm(
       id: id ?? this.id,
@@ -31,26 +62,60 @@ class SavedForm {
       createdOn: createdOn ?? this.createdOn,
       lastModified: lastModified ?? this.lastModified,
       questions: questions ?? this.questions,
+      selectedHeaderId: selectedHeaderId ?? this.selectedHeaderId,
+      instituteName: instituteName ?? this.instituteName,
+      examTitle: examTitle ?? this.examTitle,
+      subtitle: subtitle ?? this.subtitle,
+      date: date ?? this.date,
+      duration: duration ?? this.duration,
+      maxMarks: maxMarks ?? this.maxMarks,
+      subject: subject ?? this.subject,
+      className: className ?? this.className,
+      customFieldValues: customFieldValues ?? this.customFieldValues,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'createdOn': createdOn.toIso8601String(),
-        'lastModified': lastModified.toIso8601String(),
-        'questions': questions.map((q) => q.toJson()).toList(),
-      };
+    'id': id,
+    'name': name,
+    'createdOn': createdOn.toIso8601String(),
+    'lastModified': lastModified.toIso8601String(),
+    'questions': questions.map((q) => q.toJson()).toList(),
+    'selectedHeaderId': selectedHeaderId,
+    'instituteName': instituteName,
+    'examTitle': examTitle,
+    'subtitle': subtitle,
+    'date': date,
+    'duration': duration,
+    'maxMarks': maxMarks,
+    'subject': subject,
+    'className': className,
+    'customFieldValues': customFieldValues,
+  };
 
   factory SavedForm.fromJson(Map<String, dynamic> json) => SavedForm(
-        id: json['id'],
-        name: json['name'],
-        createdOn: DateTime.parse(json['createdOn']),
-        lastModified: DateTime.parse(json['lastModified']),
-        questions: (json['questions'] as List)
-            .map((q) => Question.fromJson(q))
-            .toList(),
-      );
+    id: json['id'],
+    name: json['name'],
+    createdOn: DateTime.parse(json['createdOn']),
+    lastModified: DateTime.parse(json['lastModified']),
+    questions: (json['questions'] as List)
+        .map((q) => Question.fromJson(q))
+        .toList(),
+    selectedHeaderId: json['selectedHeaderId'],
+    instituteName: json['instituteName'],
+    examTitle: json['examTitle'],
+    subtitle: json['subtitle'],
+    date: json['date'],
+    duration: json['duration'],
+    maxMarks: json['maxMarks'],
+    subject: json['subject'],
+    className: json['className'],
+    customFieldValues:
+        (json['customFieldValues'] as Map<String, dynamic>?)?.map(
+          (k, v) => MapEntry(k, v.toString()),
+        ) ??
+        {},
+  );
 }
 
 class SavedFormsService {

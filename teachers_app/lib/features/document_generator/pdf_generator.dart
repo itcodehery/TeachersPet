@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:minty/features/form_builder/question_model.dart';
+import 'package:minty/features/form_builder/header_template_model.dart';
+import 'package:minty/features/form_builder/prebuilt_headers.dart';
 
 class QuestionCounter {
   int count = 1;
@@ -30,7 +32,20 @@ const Map<int, String> romanNumeralsTill15 = {
   15: 'XV',
 };
 
-Future<Uint8List> generateQuestionPaperPdf(List<Question> questions) async {
+Future<Uint8List> generateQuestionPaperPdf(
+  List<Question> questions, {
+  HeaderTemplate? headerTemplate,
+  // Form content values
+  String? instituteName,
+  String? examTitle,
+  String? subtitle,
+  String? date,
+  String? duration,
+  String? maxMarks,
+  String? subject,
+  String? className,
+  Map<String, String>? customFieldValues,
+}) async {
   final font = await rootBundle.load('assets/times.ttf');
   final boldFont = await rootBundle.load('assets/timesbd.ttf');
   final italicFont = await rootBundle.load('assets/timesi.ttf');
@@ -47,15 +62,25 @@ Future<Uint8List> generateQuestionPaperPdf(List<Question> questions) async {
   final counter = QuestionCounter();
   final mainCounter = MainCounter();
 
+  // Use provided template or default to Simple
+  final template = headerTemplate ?? PrebuiltHeaders.defaultTemplate;
+
   pdf.addPage(
     pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.all(32),
       build: (context) => [
-        pw.Header(
-          level: 0,
-          text: 'Question Paper',
-          textStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 24),
+        _buildHeaderFromTemplate(
+          template,
+          instituteName: instituteName,
+          examTitle: examTitle,
+          subtitle: subtitle,
+          date: date,
+          duration: duration,
+          maxMarks: maxMarks,
+          subject: subject,
+          className: className,
+          customFieldValues: customFieldValues,
         ),
         pw.SizedBox(height: 20),
         ...questions.map((q) => _buildQuestionWidget(q, counter, mainCounter)),
@@ -64,6 +89,172 @@ Future<Uint8List> generateQuestionPaperPdf(List<Question> questions) async {
   );
 
   return pdf.save();
+}
+
+/// Builds a PDF header widget from a HeaderTemplate
+pw.Widget _buildHeaderFromTemplate(
+  HeaderTemplate template, {
+  String? instituteName,
+  String? examTitle,
+  String? subtitle,
+  String? date,
+  String? duration,
+  String? maxMarks,
+  String? subject,
+  String? className,
+  Map<String, String>? customFieldValues,
+}) {
+  // Blank template = no header
+  if (template.id == 'prebuilt_blank') {
+    return pw.SizedBox.shrink();
+  }
+
+  final alignment = template.titleAlignment == HeaderAlignment.left
+      ? pw.CrossAxisAlignment.start
+      : template.titleAlignment == HeaderAlignment.right
+      ? pw.CrossAxisAlignment.end
+      : pw.CrossAxisAlignment.center;
+
+  final textAlign = template.titleAlignment == HeaderAlignment.left
+      ? pw.TextAlign.left
+      : template.titleAlignment == HeaderAlignment.right
+      ? pw.TextAlign.right
+      : pw.TextAlign.center;
+
+  final rowMainAlignment = template.titleAlignment == HeaderAlignment.left
+      ? pw.MainAxisAlignment.start
+      : template.titleAlignment == HeaderAlignment.right
+      ? pw.MainAxisAlignment.end
+      : pw.MainAxisAlignment.center;
+
+  // Helper to format a field - if value is set, display it; otherwise show blank
+  String formatField(String label, String? value) {
+    if (value != null && value.isNotEmpty) {
+      return '$label: $value';
+    }
+    return '$label: ________________';
+  }
+
+  final content = pw.Column(
+    crossAxisAlignment: alignment,
+    children: [
+      // Institution name (use form value if template has it enabled)
+      if (template.instituteName != null)
+        pw.Text(
+          instituteName ?? 'Institution Name',
+          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 16),
+          textAlign: textAlign,
+        ),
+      // Subtitle
+      if (template.subtitle != null)
+        pw.Padding(
+          padding: const pw.EdgeInsets.only(top: 2),
+          child: pw.Text(
+            subtitle ?? 'Subtitle',
+            style: const pw.TextStyle(fontSize: 11),
+            textAlign: textAlign,
+          ),
+        ),
+      // Exam title
+      if (template.examTitle != null)
+        pw.Padding(
+          padding: const pw.EdgeInsets.only(top: 6),
+          child: pw.Text(
+            examTitle ?? 'Examination',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+            textAlign: textAlign,
+          ),
+        ),
+      // Date, Duration, Max Marks row
+      if (template.showDate || template.showDuration || template.showMaxMarks)
+        pw.Padding(
+          padding: const pw.EdgeInsets.only(top: 8),
+          child: pw.Row(
+            mainAxisAlignment: rowMainAlignment,
+            children: [
+              if (template.showDate)
+                pw.Text(
+                  formatField('Date', date),
+                  style: const pw.TextStyle(fontSize: 11),
+                ),
+              if (template.showDuration)
+                pw.Padding(
+                  padding: const pw.EdgeInsets.only(left: 20),
+                  child: pw.Text(
+                    formatField('Duration', duration),
+                    style: const pw.TextStyle(fontSize: 11),
+                  ),
+                ),
+              if (template.showMaxMarks)
+                pw.Padding(
+                  padding: const pw.EdgeInsets.only(left: 20),
+                  child: pw.Text(
+                    formatField('Max Marks', maxMarks),
+                    style: const pw.TextStyle(fontSize: 11),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      // Subject, Class row
+      if (template.showSubjectField || template.showClassField)
+        pw.Padding(
+          padding: const pw.EdgeInsets.only(top: 4),
+          child: pw.Row(
+            mainAxisAlignment: rowMainAlignment,
+            children: [
+              if (template.showSubjectField)
+                pw.Text(
+                  formatField('Subject', subject),
+                  style: const pw.TextStyle(fontSize: 11),
+                ),
+              if (template.showClassField)
+                pw.Padding(
+                  padding: const pw.EdgeInsets.only(left: 20),
+                  child: pw.Text(
+                    formatField('Class', className),
+                    style: const pw.TextStyle(fontSize: 11),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      // Custom fields
+      if (template.customFields.isNotEmpty)
+        pw.Padding(
+          padding: const pw.EdgeInsets.only(top: 4),
+          child: pw.Wrap(
+            spacing: 20,
+            runSpacing: 4,
+            alignment: template.titleAlignment == HeaderAlignment.left
+                ? pw.WrapAlignment.start
+                : template.titleAlignment == HeaderAlignment.right
+                ? pw.WrapAlignment.end
+                : pw.WrapAlignment.center,
+            children: template.customFields.map((field) {
+              final value = customFieldValues?[field];
+              return pw.Text(
+                formatField(field, value),
+                style: const pw.TextStyle(fontSize: 11),
+              );
+            }).toList(),
+          ),
+        ),
+    ],
+  );
+
+  // Wrap in border if needed
+  if (template.showBorder) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(12),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.black, width: 1),
+      ),
+      child: content,
+    );
+  }
+
+  return content;
 }
 
 pw.Widget _buildQuestionWidget(
