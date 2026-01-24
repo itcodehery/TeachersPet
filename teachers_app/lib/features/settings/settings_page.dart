@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:minty/core/themes/app_theme.dart';
+import 'package:minty/core/accessibility/accessibility_settings.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -8,6 +9,7 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentTheme = ref.watch(themeProvider);
+    final accessibility = ref.watch(accessibilityProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -20,6 +22,7 @@ class SettingsPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Appearance Section
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
@@ -53,7 +56,7 @@ class SettingsPage extends ConsumerWidget {
                       fontSize: 14,
                       color: Theme.of(
                         context,
-                      ).colorScheme.onSurface.withOpacity(0.6),
+                      ).colorScheme.onSurface.withAlpha(150),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -65,6 +68,131 @@ class SettingsPage extends ConsumerWidget {
                         ref.read(themeProvider.notifier).setTheme(themeType);
                       },
                     ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Accessibility Section
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              'Accessibility',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Font Size Slider
+                  Text(
+                    'Font Size',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Adjust text size throughout the app',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha(150),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Text('A', style: TextStyle(fontSize: 12)),
+                      Expanded(
+                        child: Slider(
+                          value: accessibility.fontScale,
+                          min: 0.6,
+                          max: 1.4,
+                          divisions: 8,
+                          label: '${(accessibility.fontScale * 100).round()}%',
+                          onChanged: (value) {
+                            ref
+                                .read(accessibilityProvider.notifier)
+                                .setFontScale(value);
+                          },
+                        ),
+                      ),
+                      const Text(
+                        'A',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Preview text
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Preview: This is how text will appear at ${(accessibility.fontScale * 100).round()}% size.',
+                      style: TextStyle(fontSize: 14 * accessibility.fontScale),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  // High Contrast Toggle
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'High Contrast Mode',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Increase text boldness and color contrast for easier reading',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withAlpha(150),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: accessibility.highContrast,
+                        onChanged: (value) {
+                          ref
+                              .read(accessibilityProvider.notifier)
+                              .setHighContrast(value);
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),

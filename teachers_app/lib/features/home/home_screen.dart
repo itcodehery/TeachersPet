@@ -35,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.energy_savings_leaf_outlined,
+              Icons.eco_outlined,
               color: Theme.of(context).colorScheme.primary,
             ),
             Text(

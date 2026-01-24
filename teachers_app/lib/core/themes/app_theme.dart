@@ -24,13 +24,15 @@ class AppTheme {
     }
   }
 
+  // Pastel Mint Green color
+  static const Color _pastelMint = Color(0xFF98D8AA);
+
   static ThemeData get _lightTheme {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: Colors.lime,
+      seedColor: _pastelMint,
       brightness: Brightness.light,
     );
     return ThemeData(
-      primarySwatch: Colors.lime,
       colorScheme: colorScheme,
       brightness: Brightness.light,
       fontFamily: fontFamily,
@@ -38,15 +40,15 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         foregroundColor: colorScheme.primary,
       ),
-      scaffoldBackgroundColor: Colors.white,
+      scaffoldBackgroundColor: const Color(0xFFF5FFF7), // Very light mint tint
       cardTheme: CardThemeData(
-        color: Colors.grey[50],
+        color: Colors.white,
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.lime[600],
+          backgroundColor: const Color(0xFF7BC9A0), // Slightly deeper mint
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
@@ -56,11 +58,10 @@ class AppTheme {
 
   static ThemeData get _darkTheme {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: Colors.lime,
+      seedColor: _pastelMint,
       brightness: Brightness.dark,
     );
     return ThemeData(
-      primarySwatch: Colors.lime,
       colorScheme: colorScheme,
       brightness: Brightness.dark,
       fontFamily: fontFamily,
@@ -68,15 +69,17 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         foregroundColor: colorScheme.primary,
       ),
-      scaffoldBackgroundColor: Colors.limeAccent.withAlpha(10),
+      scaffoldBackgroundColor: const Color(
+        0xFF1A2E1F,
+      ), // Dark mint-tinted background
       cardTheme: CardThemeData(
-        color: Colors.grey[850],
+        color: const Color(0xFF243328), // Dark mint card
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.lime[600],
+          backgroundColor: const Color(0xFF7BC9A0), // Slightly deeper mint
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
