@@ -1,7 +1,7 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
+import 'repositories/forms_repository.dart';
+import 'repositories/local_forms_repository.dart';
 import '../form_builder/question_model.dart';
+// import 'repositories/supabase_forms_repository.dart'; // Uncomment to use Supabase
 
 class SavedForm {
   final String id;
@@ -119,35 +119,35 @@ class SavedForm {
 }
 
 class SavedFormsService {
-  static Future<File> _getFile() async {
-    final dir = await getApplicationDocumentsDirectory();
-    return File('${dir.path}/forms.json');
+  // Configurable repository - defaults to local storage
+  // Change this to SupabaseFormsRepository() to use Supabase
+  static FormsRepository _repository = LocalFormsRepository();
+
+  static void useRepository(FormsRepository repository) {
+    _repository = repository;
   }
 
   static Future<List<SavedForm>> loadForms() async {
-    final file = await _getFile();
-    if (!await file.exists()) return [];
-    final content = await file.readAsString();
-    final data = jsonDecode(content) as List;
-    return data.map((f) => SavedForm.fromJson(f)).toList();
+    return _repository.loadForms();
   }
 
   static Future<void> saveForms(List<SavedForm> forms) async {
-    final file = await _getFile();
-    final content = jsonEncode(forms.map((f) => f.toJson()).toList());
-    await file.writeAsString(content);
+    if (_repository is LocalFormsRepository) {
+      await (_repository as LocalFormsRepository).saveAllForms(forms);
+    } else {
+      // For remote, we would ideally sync, but for now let's just warn or
+      // try to save each one.
+      for (final form in forms) {
+        await _repository.saveForm(form);
+      }
+    }
   }
 
   static Future<void> addForm(SavedForm form) async {
-    final forms = await loadForms();
-    forms.removeWhere((f) => f.id == form.id);
-    forms.add(form);
-    await saveForms(forms);
+    await _repository.saveForm(form);
   }
 
   static Future<void> deleteForm(String id) async {
-    final forms = await loadForms();
-    forms.removeWhere((f) => f.id == id);
-    await saveForms(forms);
+    await _repository.deleteForm(id);
   }
 }

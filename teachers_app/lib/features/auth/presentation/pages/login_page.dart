@@ -40,6 +40,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final authState = ref.watch(authProvider);
     final isLoading = authState.status == AuthStatus.loading;
 
+    // Redirect if already authenticated
+    if (authState.status == AuthStatus.authenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.go('/home');
+      });
+    }
+
     // Show error snackbar if there's an error
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.errorMessage != null &&

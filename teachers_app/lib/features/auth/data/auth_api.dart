@@ -1,88 +1,108 @@
-/// Dummy authentication API service
-/// This can be easily replaced with Firebase Authentication later
-class AuthApi {
-  // Simulated delay to mimic network request
-  static const _networkDelay = Duration(milliseconds: 800);
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-  // Dummy user data for testing
-  static const _dummyUser = {
-    'email': 'test@minty.com',
-    'password': 'password123',
-    'name': 'Test User',
-  };
+/// Authentication API service using Supabase
+class AuthApi {
+  final _supabase = Supabase.instance.client;
+
+  /// Get current user
+  User? get currentUser => _supabase.auth.currentUser;
+
+  /// Stream of auth state changes
+  Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
 
   /// Attempts to log in with the provided credentials
-  /// Returns a [Map] with user data on success, throws [AuthException] on failure
+  /// Returns a [Map] with user data on success, throws [AppAuthException] on failure
   Future<Map<String, dynamic>> login(String email, String password) async {
-    await Future.delayed(_networkDelay);
-
     // Validate credentials
     if (email.isEmpty || password.isEmpty) {
-      throw AuthException('Email and password are required');
+      throw AppAuthException('Email and password are required');
     }
 
-    // Check against dummy credentials
-    if (email == _dummyUser['email'] && password == _dummyUser['password']) {
+    try {
+      final response = await _supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      final user = response.user;
+      if (user == null) {
+        throw AppAuthException('Login failed: No user returned');
+      }
+
       return {
-        'id': 'user_123',
-        'email': email,
-        'name': _dummyUser['name'],
-        'createdAt': DateTime.now().toIso8601String(),
+        'id': user.id,
+        'email': user.email,
+        'name': user.userMetadata?['name'],
+        'createdAt': user.createdAt,
       };
+    } on AuthException catch (e) {
+      throw AppAuthException(e.message);
+    } catch (e) {
+      throw AppAuthException('An unexpected error occurred: $e');
     }
-
-    throw AuthException('Invalid email or password');
   }
 
   /// Attempts to create a new user account
-  /// Returns a [Map] with user data on success, throws [AuthException] on failure
+  /// Returns a [Map] with user data on success, throws [AppAuthException] on failure
   Future<Map<String, dynamic>> signUp({
     required String email,
     required String password,
     required String name,
   }) async {
-    await Future.delayed(_networkDelay);
-
     // Validate input
     if (email.isEmpty) {
-      throw AuthException('Email is required');
+      throw AppAuthException('Email is required');
     }
     if (password.isEmpty) {
-      throw AuthException('Password is required');
+      throw AppAuthException('Password is required');
     }
     if (name.isEmpty) {
-      throw AuthException('Name is required');
+      throw AppAuthException('Name is required');
     }
     if (password.length < 6) {
-      throw AuthException('Password must be at least 6 characters');
+      throw AppAuthException('Password must be at least 6 characters');
     }
 
-    // Simulate email already in use check
-    if (email == _dummyUser['email']) {
-      throw AuthException('Email is already in use');
-    }
+    try {
+      final response = await _supabase.auth.signUp(
+        email: email,
+        password: password,
+        data: {'name': name},
+      );
 
-    // Return mock user data for successful signup
-    return {
-      'id': 'user_${DateTime.now().millisecondsSinceEpoch}',
-      'email': email,
-      'name': name,
-      'createdAt': DateTime.now().toIso8601String(),
-    };
+      final user = response.user;
+      if (user == null) {
+        throw AppAuthException('Signup failed: No user returned');
+      }
+
+      return {
+        'id': user.id,
+        'email': user.email,
+        'name': user.userMetadata?['name'],
+        'createdAt': user.createdAt,
+      };
+    } on AuthException catch (e) {
+      throw AppAuthException(e.message);
+    } catch (e) {
+      throw AppAuthException('An unexpected error occurred: $e');
+    }
   }
 
   /// Signs out the current user
   Future<void> signOut() async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    // In a real implementation, this would clear tokens/session
+    try {
+      await _supabase.auth.signOut();
+    } catch (e) {
+      throw AppAuthException('Sign out failed: $e');
+    }
   }
 }
 
 /// Custom exception for authentication errors
-class AuthException implements Exception {
+class AppAuthException implements Exception {
   final String message;
 
-  AuthException(this.message);
+  AppAuthException(this.message);
 
   @override
   String toString() => message;

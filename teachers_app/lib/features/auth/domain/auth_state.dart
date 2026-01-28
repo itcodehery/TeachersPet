@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import '../data/auth_api.dart';
 
 /// Represents the current authentication state
@@ -32,8 +34,55 @@ class AuthState {
 /// StateNotifier for managing authentication state
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthApi _authApi;
+  StreamSubscription<supabase.AuthState>? _authSubscription;
 
-  AuthNotifier(this._authApi) : super(const AuthState());
+  AuthNotifier(this._authApi) : super(const AuthState()) {
+    _init();
+  }
+
+  void _init() {
+    final user = _authApi.currentUser;
+    if (user != null) {
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        user: _userToMap(user),
+      );
+    } else {
+      state = state.copyWith(status: AuthStatus.unauthenticated);
+    }
+
+    _authSubscription = _authApi.authStateChanges.listen((data) {
+      final event = data.event;
+      final session = data.session;
+
+      if (event == supabase.AuthChangeEvent.signedIn ||
+          event == supabase.AuthChangeEvent.tokenRefreshed) {
+        if (session != null) {
+          state = state.copyWith(
+            status: AuthStatus.authenticated,
+            user: _userToMap(session.user),
+          );
+        }
+      } else if (event == supabase.AuthChangeEvent.signedOut) {
+        state = state.copyWith(status: AuthStatus.unauthenticated, user: null);
+      }
+    });
+  }
+
+  Map<String, dynamic> _userToMap(supabase.User user) {
+    return {
+      'id': user.id,
+      'email': user.email,
+      'name': user.userMetadata?['name'],
+      'createdAt': user.createdAt,
+    };
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
 
   /// Attempts to log in with email and password
   Future<bool> login(String email, String password) async {
@@ -43,7 +92,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final user = await _authApi.login(email, password);
       state = state.copyWith(status: AuthStatus.authenticated, user: user);
       return true;
-    } on AuthException catch (e) {
+    } on AppAuthException catch (e) {
       state = state.copyWith(status: AuthStatus.error, errorMessage: e.message);
       return false;
     } catch (e) {
@@ -71,7 +120,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       state = state.copyWith(status: AuthStatus.authenticated, user: user);
       return true;
-    } on AuthException catch (e) {
+    } on AppAuthException catch (e) {
       state = state.copyWith(status: AuthStatus.error, errorMessage: e.message);
       return false;
     } catch (e) {
