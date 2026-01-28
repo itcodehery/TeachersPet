@@ -18,8 +18,14 @@ class SupabaseFormsRepository implements FormsRepository {
 
   @override
   Future<void> saveForm(SavedForm form) async {
+    final user = _supabase.auth.currentUser;
+    print('DEBUG: Saving form. Current user: $user'); // Debug print
+    if (user == null) {
+      throw Exception('User not logged in');
+    }
+
     final data = _toJson(form);
-    data['user_id'] = _supabase.auth.currentUser!.id;
+    data['user_id'] = user.id;
 
     await _supabase.from('forms').upsert(data);
   }

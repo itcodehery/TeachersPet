@@ -94,6 +94,17 @@ class FormBuilderNotifier extends StateNotifier<SavedForm> {
       lastModified: DateTime.now(),
     );
   }
+
+  void reset() {
+    state = SavedForm(
+      id: const Uuid().v4(),
+      name: 'Untitled Form',
+      createdOn: DateTime.now(),
+      lastModified: DateTime.now(),
+      questions: [],
+      selectedHeaderId: 'prebuilt_simple',
+    );
+  }
 }
 
 final formBuilderProvider =

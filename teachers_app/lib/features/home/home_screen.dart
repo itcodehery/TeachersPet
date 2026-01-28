@@ -1,19 +1,21 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:minty/features/auth/domain/auth_state.dart';
 import 'package:minty/tips.dart';
 import 'package:minty/features/form_builder/saved_forms_service.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentTipIndex = 0;
   List<SavedForm> _recentForms = [];
   bool _loadingForms = true;
@@ -45,8 +47,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+
     return Scaffold(
       appBar: AppBar(
+        leading: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: GestureDetector(
+            onTap: () => context.push("/settings"),
+            child: CircleAvatar(
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+              child: Text(
+                (authState.user?['name'] as String?)?.isNotEmpty == true
+                    ? authState.user!['name'][0].toUpperCase()
+                    : 'U',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
+              ),
+            ),
+          ),
+        ),
         title: Row(
           spacing: 5,
           mainAxisSize: MainAxisSize.min,
@@ -103,7 +126,8 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icons.add,
               title: 'Create New Form',
               description: 'Start building a new form from scratch.',
-              onTap: () => context.push('/form-builder'),
+              onTap: () =>
+                  context.push('/form-builder').then((_) => _loadRecentForms()),
             ),
             const SizedBox(height: 24),
             _buildFeatureCard(
@@ -111,25 +135,77 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icons.list_alt,
               title: 'View Saved Forms',
               description: 'Access and manage your previously created forms.',
-              onTap: () => context.push('/saved-forms'),
+              onTap: () =>
+                  context.push('/saved-forms').then((_) => _loadRecentForms()),
             ),
             const SizedBox(height: 32),
             // Recent Forms Section
-            if (_recentForms.isNotEmpty || _loadingForms) ...[
-              Text(
-                'Recent Forms',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+            const SizedBox(height: 32),
+            Text(
+              'Recent Forms',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
-              const SizedBox(height: 12),
-              if (_loadingForms)
-                const Center(child: CircularProgressIndicator())
-              else
-                ..._recentForms.map((form) => _buildRecentFormTile(form)),
-            ],
+            ),
+            const SizedBox(height: 12),
+            if (_loadingForms)
+              const Center(child: CircularProgressIndicator())
+            else if (_recentForms.isEmpty)
+              Card(
+                margin: EdgeInsets.zero,
+                elevation: 0,
+                color: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest.withAlpha(50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outline.withOpacity(0.2),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.feed_outlined,
+                          size: 48,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.2),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No recent forms',
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.5),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Create a new form to get started',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            else
+              ..._recentForms.map((form) => _buildRecentFormTile(form)),
           ],
         ),
       ),
@@ -173,7 +249,9 @@ class _HomeScreenState extends State<HomeScreen> {
           Icons.chevron_right,
           color: Theme.of(context).colorScheme.onSurface.withAlpha(100),
         ),
-        onTap: () => context.push('/form-builder', extra: form),
+        onTap: () => context
+            .push('/form-builder', extra: form)
+            .then((_) => _loadRecentForms()),
       ),
     );
   }

@@ -4,7 +4,14 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import '../data/auth_api.dart';
 
 /// Represents the current authentication state
-enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
+enum AuthStatus {
+  initial,
+  loading,
+  authenticated,
+  unauthenticated,
+  error,
+  verificationRequired,
+}
 
 /// Holds the authentication state data
 class AuthState {
@@ -42,6 +49,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   void _init() {
     final user = _authApi.currentUser;
+    print('DEBUG: AuthNotifier init. Current user: $user');
     if (user != null) {
       state = state.copyWith(
         status: AuthStatus.authenticated,
@@ -54,6 +62,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _authSubscription = _authApi.authStateChanges.listen((data) {
       final event = data.event;
       final session = data.session;
+      print('DEBUG: Auth event: $event, Session: ${session?.user}');
 
       if (event == supabase.AuthChangeEvent.signedIn ||
           event == supabase.AuthChangeEvent.tokenRefreshed) {

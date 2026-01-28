@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/auth_state.dart';
+import 'package:minty/routes/app_routes.dart';
 
 class SignupPage extends ConsumerStatefulWidget {
   const SignupPage({super.key});
@@ -39,7 +40,14 @@ class _SignupPageState extends ConsumerState<SignupPage> {
           );
 
       if (success && mounted) {
-        context.go('/home');
+        if (ref.read(authProvider).status == AuthStatus.verificationRequired) {
+          context.go(
+            Routes.emailVerification,
+            extra: _emailController.text.trim(),
+          );
+        } else {
+          context.go('/home');
+        }
       }
     }
   }

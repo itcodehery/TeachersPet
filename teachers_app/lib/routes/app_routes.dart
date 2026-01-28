@@ -6,6 +6,7 @@ abstract class Routes {
   static const login = _Paths.login;
   static const signup = _Paths.signup;
   static const forgotPassword = _Paths.forgotPassword;
+  static const emailVerification = _Paths.emailVerification;
   Routes._();
 }
 
@@ -17,6 +18,7 @@ abstract class _Paths {
   static const login = '/login';
   static const signup = '/signup';
   static const forgotPassword = '/forgot-password';
+  static const emailVerification = '/email-verification';
   _Paths._();
 }
 
@@ -28,6 +30,7 @@ abstract class _Names {
   static const login = 'login';
   static const signup = 'signup';
   static const forgotPassword = 'forgotPassword';
+  static const emailVerification = 'emailVerification';
   _Names._();
 }
 
@@ -39,5 +42,6 @@ abstract class Names {
   static const login = _Names.login;
   static const signup = _Names.signup;
   static const forgotPassword = _Names.forgotPassword;
+  static const emailVerification = _Names.emailVerification;
   Names._();
 }

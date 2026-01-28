@@ -71,8 +71,17 @@ class AuthApi {
       );
 
       final user = response.user;
+      final session = response.session;
+
       if (user == null) {
         throw AppAuthException('Signup failed: No user returned');
+      }
+
+      // If session is null, email confirmation is likely required
+      if (session == null) {
+        throw EmailVerificationRequiredException(
+          'Please check your email to confirm your account.',
+        );
       }
 
       return {
@@ -114,6 +123,15 @@ class AppAuthException implements Exception {
   final String message;
 
   AppAuthException(this.message);
+
+  @override
+  String toString() => message;
+}
+
+class EmailVerificationRequiredException implements Exception {
+  final String message;
+
+  EmailVerificationRequiredException(this.message);
 
   @override
   String toString() => message;

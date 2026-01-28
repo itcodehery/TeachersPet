@@ -41,6 +41,11 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(formBuilderProvider.notifier).loadForm(widget.form!);
       });
+    } else {
+      // If no form is passed, reset the state to start fresh
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(formBuilderProvider.notifier).reset();
+      });
     }
     _setupAutoSave();
   }
@@ -297,14 +302,23 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
                         IconButton(
                           icon: const Icon(Icons.save_outlined),
                           onPressed: () {
-                            SavedFormsService.addForm(form).then((_) {
-                              if (context.mounted) {
-                                AppSnackbar.showSuccess(
-                                  context,
-                                  'Form "${form.name}" saved!',
-                                );
-                              }
-                            });
+                            SavedFormsService.addForm(form)
+                                .then((_) {
+                                  if (context.mounted) {
+                                    AppSnackbar.showSuccess(
+                                      context,
+                                      'Form "${form.name}" saved!',
+                                    );
+                                  }
+                                })
+                                .catchError((e) {
+                                  if (context.mounted) {
+                                    AppSnackbar.showError(
+                                      context,
+                                      'Failed to save form: $e',
+                                    );
+                                  }
+                                });
                           },
                         ),
                       ],
