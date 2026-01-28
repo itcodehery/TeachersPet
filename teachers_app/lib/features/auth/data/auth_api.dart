@@ -96,6 +96,17 @@ class AuthApi {
       throw AppAuthException('Sign out failed: $e');
     }
   }
+
+  /// Sends a password reset email to the user
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _supabase.auth.resetPasswordForEmail(email);
+    } on AuthException catch (e) {
+      throw AppAuthException(e.message);
+    } catch (e) {
+      throw AppAuthException('Failed to send reset email: $e');
+    }
+  }
 }
 
 /// Custom exception for authentication errors

@@ -138,6 +138,34 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
+  /// Sends a password reset email
+  Future<bool> resetPassword(String email) async {
+    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+
+    try {
+      await _authApi.sendPasswordResetEmail(email);
+      // We don't change status to specific 'resetSent' to avoid UI jumps,
+      // but we could. For now, just set back to unauthenticated (or whatever it was)
+      // Actually, loading->success is good to stop the spinner.
+      // But we are likely on a separate page.
+      // Let's just return true and not change the main user state (which is probably unauthenticated).
+      // We set status back to unauthenticated if it was unauthenticated.
+      // But since we might be on login page, let's just restore previous state or set to unauthenticated.
+      // Easiest is to set status to unauthenticated (since user is likely not logged in)
+      state = state.copyWith(status: AuthStatus.unauthenticated);
+      return true;
+    } on AppAuthException catch (e) {
+      state = state.copyWith(status: AuthStatus.error, errorMessage: e.message);
+      return false;
+    } catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: 'An unexpected error occurred',
+      );
+      return false;
+    }
+  }
+
   /// Clears any error message
   void clearError() {
     state = state.copyWith(errorMessage: null);
