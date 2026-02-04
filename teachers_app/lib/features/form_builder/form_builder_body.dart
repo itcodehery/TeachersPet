@@ -46,6 +46,7 @@ class _FormBuilderBodyState extends ConsumerState<FormBuilderBody> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (context) => AddQuestionSheet(initialQuestion: question),
     );
   }
@@ -177,7 +178,9 @@ class _FormBuilderBodyState extends ConsumerState<FormBuilderBody> {
             const SizedBox(height: 8),
             if (question.tableData != null)
               Table(
-                border: TableBorder.all(color: Theme.of(context).colorScheme.outline),
+                border: TableBorder.all(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
                 children: question.tableData!.map((row) {
                   return TableRow(
                     children: row.map((cell) {
@@ -358,7 +361,9 @@ class _FormBuilderBodyState extends ConsumerState<FormBuilderBody> {
                             IconButton(
                               icon: Icon(
                                 Icons.edit_outlined,
-                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.6),
                               ),
                               onPressed: () =>
                                   _showEditSheet(context, questions[index]),

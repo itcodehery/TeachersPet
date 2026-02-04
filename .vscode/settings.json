@@ -1,3 +1,4 @@
 {
-  "terminal.integrated.fontFamily": "FantasqueSansM Nerd Font"
+  "terminal.integrated.fontFamily": "FantasqueSansM Nerd Font",
+  "editor.fontSize": 12
 }

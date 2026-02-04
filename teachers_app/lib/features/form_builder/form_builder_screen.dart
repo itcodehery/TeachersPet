@@ -147,6 +147,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
+          useSafeArea: true,
           builder: (context) => const AddQuestionSheet(),
         );
       },
@@ -207,13 +208,40 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
         );
       },
       'Reset Form': (BuildContext context, WidgetRef ref) {
-        ref.read(formBuilderProvider.notifier).clearQuestions();
+        context.pop(); // Close split button menu
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Reset Form?'),
+            content: const Text(
+              'Are you sure you want to reset this form? All questions will be removed.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => context.pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ),
+                onPressed: () {
+                  ref.read(formBuilderProvider.notifier).clearQuestions();
+                  context.pop();
+                  AppSnackbar.showSuccess(context, 'Form reset successfully');
+                },
+                child: const Text('Reset'),
+              ),
+            ],
+          ),
+        );
       },
       'Choose Header': (BuildContext context, WidgetRef ref) {
         context.pop();
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
+          useSafeArea: true,
           builder: (context) => const HeaderSelectorSheet(),
         );
       },

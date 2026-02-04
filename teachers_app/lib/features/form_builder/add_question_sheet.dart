@@ -821,21 +821,23 @@ class _AddQuestionSheetState extends ConsumerState<AddQuestionSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: _isSelectingType
-            ? SizedBox(
-                height: MediaQuery.of(context).size.height * 0.7,
-                child: _buildTypeSelectionScreen(),
-              )
-            : SingleChildScrollView(child: _buildFormScreen()),
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: _isSelectingType
+              ? SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: _buildTypeSelectionScreen(),
+                )
+              : SingleChildScrollView(child: _buildFormScreen()),
+        ),
       ),
     );
   }

@@ -209,16 +209,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: TextButton(
-        onPressed: _cycleTip,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            'Tip: ${Tips.tips[_currentTipIndex]}',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withAlpha(150),
-              fontStyle: FontStyle.italic,
+      bottomNavigationBar: SafeArea(
+        child: TextButton(
+          onPressed: _cycleTip,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Tip: ${Tips.tips[_currentTipIndex]}',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withAlpha(150),
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ),
         ),

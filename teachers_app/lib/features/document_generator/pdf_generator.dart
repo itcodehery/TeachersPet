@@ -268,19 +268,22 @@ pw.Widget _buildQuestionWidget(
     case QuestionType.fillInTheBlanks:
       return pw.Padding(
         padding: const pw.EdgeInsets.only(bottom: 8.0),
-        child: pw.Row(
-          children: [
-            pw.Text('${counter.count++}. '),
-            _buildTextWithFractions(question.title),
-          ],
+        child: _buildTextWithFractions(
+          question.title,
+          prefix: '${counter.count++}. ',
         ),
       );
     case QuestionType.multipleChoice:
       final options = question.options ?? [];
       const int maxCharsInLine = 80;
       final totalChars = options.join().length;
-
       final useSingleLine = totalChars < maxCharsInLine;
+
+      // Use safe text builder with prefix to ensure spanning across pages
+      final questionWidget = _buildTextWithFractions(
+        question.title,
+        prefix: '${counter.count++}. ',
+      );
 
       if (useSingleLine) {
         return pw.Padding(
@@ -288,12 +291,7 @@ pw.Widget _buildQuestionWidget(
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Row(
-                children: [
-                  pw.Text('${counter.count++}. '),
-                  _buildTextWithFractions(question.title),
-                ],
-              ),
+              questionWidget,
               pw.SizedBox(height: 8),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -307,28 +305,41 @@ pw.Widget _buildQuestionWidget(
           ),
         );
       } else {
+        // Build rows manually to allow spanning (GridView doesn't span well)
+        final List<pw.Widget> optionRows = [];
+        for (var i = 0; i < options.length; i += 2) {
+          final opt1 = options[i];
+          final opt2 = (i + 1 < options.length) ? options[i + 1] : null;
+
+          optionRows.add(
+            pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 4.0),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Expanded(
+                    child: pw.Text('${String.fromCharCode(97 + i)}. $opt1'),
+                  ),
+                  pw.SizedBox(width: 16),
+                  if (opt2 != null)
+                    pw.Expanded(
+                      child: pw.Text(
+                        '${String.fromCharCode(97 + i + 1)}. $opt2',
+                      ),
+                    )
+                  else
+                    pw.Spacer(),
+                ],
+              ),
+            ),
+          );
+        }
+
         return pw.Padding(
           padding: const pw.EdgeInsets.only(bottom: 16.0),
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Row(
-                children: [
-                  pw.Text('${counter.count++}. '),
-                  _buildTextWithFractions(question.title),
-                ],
-              ),
-              pw.SizedBox(height: 8),
-              pw.GridView(
-                crossAxisCount: 2,
-                childAspectRatio: 12,
-                children: options.asMap().entries.map((entry) {
-                  return pw.Text(
-                    '${String.fromCharCode(97 + entry.key)}. ${entry.value}',
-                  );
-                }).toList(),
-              ),
-            ],
+            children: [questionWidget, pw.SizedBox(height: 8), ...optionRows],
           ),
         );
       }
@@ -343,11 +354,9 @@ pw.Widget _buildQuestionWidget(
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Row(
-              children: [
-                pw.Text('${counter.count++}. '),
-                _buildTextWithFractions(question.title),
-              ],
+            _buildTextWithFractions(
+              question.title,
+              prefix: '${counter.count++}. ',
             ),
             pw.SizedBox(height: 8),
             pw.Column(
@@ -440,11 +449,9 @@ pw.Widget _buildQuestionWidget(
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Row(
-              children: [
-                pw.Text('${counter.count++}. '),
-                _buildTextWithFractions(question.title),
-              ],
+            _buildTextWithFractions(
+              question.title,
+              prefix: '${counter.count++}. ',
             ),
             pw.Padding(
               padding: const pw.EdgeInsets.only(left: 16.0),
@@ -531,11 +538,9 @@ pw.Widget _buildQuestionWidget(
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Row(
-              children: [
-                pw.Text('${counter.count++}. '),
-                _buildTextWithFractions(question.title),
-              ],
+            _buildTextWithFractions(
+              question.title,
+              prefix: '${counter.count++}. ',
             ),
             if (imageWidgets.isNotEmpty) ...imageWidgets,
           ],
@@ -587,36 +592,32 @@ pw.Widget _buildQuestionWidget(
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Row(
-              children: [
-                pw.Text('${counter.count++}. '),
-                _buildTextWithFractions(question.title),
-              ],
+            _buildTextWithFractions(
+              question.title,
+              prefix: '${counter.count++}. ',
             ),
             pw.SizedBox(height: 8),
-            pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
+            pw.Partitions(
               children: [
                 if (imageWidgets.isNotEmpty)
-                  pw.Expanded(
-                    flex: 1,
-                    child: pw.Column(children: imageWidgets),
-                  ),
-                if (imageWidgets.isNotEmpty) pw.SizedBox(width: 16),
-                pw.Expanded(
+                  pw.Partition(child: pw.Column(children: imageWidgets)),
+                pw.Partition(
                   flex: 2,
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: (question.subQuestions ?? []).asMap().entries.map((
-                      entry,
-                    ) {
-                      final subQuestionText =
-                          '${String.fromCharCode(97 + entry.key)}. ${entry.value.title}';
-                      return pw.Padding(
-                        padding: const pw.EdgeInsets.only(bottom: 8.0),
-                        child: _buildTextWithFractions(subQuestionText),
-                      );
-                    }).toList(),
+                  child: pw.Padding(
+                    padding: const pw.EdgeInsets.only(left: 16),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: (question.subQuestions ?? []).asMap().entries.map((
+                        entry,
+                      ) {
+                        final subQuestionText =
+                            '${String.fromCharCode(97 + entry.key)}. ${entry.value.title}';
+                        return pw.Padding(
+                          padding: const pw.EdgeInsets.only(bottom: 8.0),
+                          child: _buildTextWithFractions(subQuestionText),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
               ],
@@ -630,11 +631,9 @@ pw.Widget _buildQuestionWidget(
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Row(
-              children: [
-                pw.Text('${counter.count++}. '),
-                _buildTextWithFractions(question.title),
-              ],
+            _buildTextWithFractions(
+              question.title,
+              prefix: '${counter.count++}. ',
             ),
             pw.SizedBox(height: 8),
             pw.Table.fromTextArray(
@@ -649,8 +648,11 @@ pw.Widget _buildQuestionWidget(
   }
 }
 
-pw.Widget _buildTextWithFractions(String text) {
+pw.Widget _buildTextWithFractions(String text, {String? prefix}) {
   final List<pw.InlineSpan> spans = [];
+  if (prefix != null) {
+    spans.add(pw.TextSpan(text: prefix));
+  }
   final RegExp fractionRegExp = RegExp(r'(\d*)\s*\{(\d+)/(\d+)}');
 
   text.splitMapJoin(
