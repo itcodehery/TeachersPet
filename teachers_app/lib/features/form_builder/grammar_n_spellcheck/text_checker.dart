@@ -21,6 +21,25 @@ class TextError {
     required this.isSpelling,
     this.message,
   });
+  TextError copyWith({
+    String? originalText,
+    String? errorWord,
+    String? suggestion,
+    int? offset,
+    int? length,
+    bool? isSpelling,
+    String? message,
+  }) {
+    return TextError(
+      originalText: originalText ?? this.originalText,
+      errorWord: errorWord ?? this.errorWord,
+      suggestion: suggestion ?? this.suggestion,
+      offset: offset ?? this.offset,
+      length: length ?? this.length,
+      isSpelling: isSpelling ?? this.isSpelling,
+      message: message ?? this.message,
+    );
+  }
 }
 
 /// Result of checking a piece of text
@@ -38,6 +57,22 @@ class CheckResult {
     required this.spellingErrors,
     required this.grammarErrors,
   });
+
+  CheckResult copyWith({
+    String? originalText,
+    int? questionIndex,
+    String? fieldType,
+    List<TextError>? spellingErrors,
+    List<TextError>? grammarErrors,
+  }) {
+    return CheckResult(
+      originalText: originalText ?? this.originalText,
+      questionIndex: questionIndex ?? this.questionIndex,
+      fieldType: fieldType ?? this.fieldType,
+      spellingErrors: spellingErrors ?? this.spellingErrors,
+      grammarErrors: grammarErrors ?? this.grammarErrors,
+    );
+  }
 
   bool get hasErrors => spellingErrors.isNotEmpty || grammarErrors.isNotEmpty;
 }

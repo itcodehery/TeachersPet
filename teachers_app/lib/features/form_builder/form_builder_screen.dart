@@ -125,6 +125,64 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
     );
   }
 
+  void _showFontSelectionDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final currentFont = ref.watch(formBuilderProvider).fontFamily;
+        return AlertDialog(
+          title: const Text('Select Font'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildFontRadio(
+                context,
+                title: 'Noto Sans',
+                subtitle: 'Modern Sans-Serif (Multi-language)',
+                value: 'NotoSans',
+                groupValue: currentFont,
+              ),
+              _buildFontRadio(
+                context,
+                title: 'Times New Roman',
+                subtitle: 'Classic Serif (English only)',
+                value: 'TimesNewRoman',
+                groupValue: currentFont,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildFontRadio(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required String value,
+    required String groupValue,
+  }) {
+    return RadioListTile<String>(
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
+      value: value,
+      groupValue: groupValue,
+      onChanged: (newValue) {
+        if (newValue != null) {
+          ref.read(formBuilderProvider.notifier).updateFontFamily(newValue);
+          Navigator.pop(context);
+        }
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final form = ref.watch(formBuilderProvider);
@@ -171,6 +229,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
               maxMarks: form.maxMarks,
               subject: form.subject,
               className: form.className,
+              fontFamily: form.fontFamily,
               customFieldValues: form.customFieldValues,
             );
       },
@@ -194,6 +253,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
           maxMarks: form.maxMarks,
           subject: form.subject,
           className: form.className,
+          fontFamily: form.fontFamily,
           customFieldValues: form.customFieldValues,
         );
 
@@ -252,6 +312,10 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
           builder: (context) => const GrammarSpellCheckDialog(),
         );
       },
+      'Change Font': (BuildContext context, WidgetRef ref) {
+        context.pop();
+        _showFontSelectionDialog(context);
+      },
     };
 
     final splitOptionIcons = {
@@ -261,6 +325,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
       'Reset Form': Icons.restore,
       'Choose Header': Icons.description_outlined,
       'Grammar & Spelling': Icons.book_outlined,
+      'Change Font': Icons.font_download_outlined,
     };
 
     return Stack(

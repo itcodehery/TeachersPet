@@ -127,7 +127,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               title: 'Create New Form',
               description: 'Start building a new form from scratch.',
               onTap: () =>
-                  context.push('/form-builder').then((_) => _loadRecentForms()),
+                  context.push('/form-wizard').then((_) => _loadRecentForms()),
             ),
             const SizedBox(height: 24),
             _buildFeatureCard(

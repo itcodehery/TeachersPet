@@ -19,6 +19,7 @@ class SavedForm {
   final String? maxMarks;
   final String? subject;
   final String? className;
+  final String fontFamily; // 'NotoSans' or 'TimesNewRoman'
   final Map<String, String> customFieldValues; // field name -> value
 
   SavedForm({
@@ -36,6 +37,7 @@ class SavedForm {
     this.maxMarks,
     this.subject,
     this.className,
+    this.fontFamily = 'NotoSans',
     this.customFieldValues = const {},
   });
 
@@ -54,6 +56,7 @@ class SavedForm {
     String? maxMarks,
     String? subject,
     String? className,
+    String? fontFamily,
     Map<String, String>? customFieldValues,
   }) {
     return SavedForm(
@@ -71,6 +74,7 @@ class SavedForm {
       maxMarks: maxMarks ?? this.maxMarks,
       subject: subject ?? this.subject,
       className: className ?? this.className,
+      fontFamily: fontFamily ?? this.fontFamily,
       customFieldValues: customFieldValues ?? this.customFieldValues,
     );
   }
@@ -90,6 +94,7 @@ class SavedForm {
     'maxMarks': maxMarks,
     'subject': subject,
     'className': className,
+    'fontFamily': fontFamily,
     'customFieldValues': customFieldValues,
   };
 
@@ -110,6 +115,7 @@ class SavedForm {
     maxMarks: json['maxMarks'],
     subject: json['subject'],
     className: json['className'],
+    fontFamily: json['fontFamily'] ?? 'NotoSans',
     customFieldValues:
         (json['customFieldValues'] as Map<String, dynamic>?)?.map(
           (k, v) => MapEntry(k, v.toString()),

@@ -37,7 +37,7 @@ class AutoSaveInterval {
 
 /// Accessibility settings model
 class AccessibilitySettings {
-  final double fontScale; // 0.6 to 1.4 (60% to 140%)
+  final double fontScale; // 0.8 to 1.3 (80% to 130%)
   final bool highContrast;
   final int autoSaveInterval; // in seconds, 0 = disabled
 

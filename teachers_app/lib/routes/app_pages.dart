@@ -10,6 +10,7 @@ import 'app_routes.dart';
 import 'package:minty/features/form_builder/saved_forms_service.dart';
 import 'package:minty/features/form_builder/form_builder_screen.dart';
 import 'package:minty/features/home/saved_forms_screen.dart';
+import 'package:minty/features/form_builder/form_setup_wizard_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/login',
@@ -37,6 +38,11 @@ final router = GoRouter(
         final form = state.extra as SavedForm?;
         return FormBuilderScreen(form: form);
       },
+    ),
+    GoRoute(
+      name: Names.formWizard,
+      path: Routes.formWizard,
+      builder: (context, state) => const FormSetupWizardScreen(),
     ),
     GoRoute(
       name: Names.savedForms,

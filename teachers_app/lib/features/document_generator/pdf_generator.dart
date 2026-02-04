@@ -5,6 +5,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:minty/features/form_builder/question_model.dart';
 import 'package:minty/features/form_builder/header_template_model.dart';
 import 'package:minty/features/form_builder/prebuilt_headers.dart';
+import 'package:printing/printing.dart';
 
 class QuestionCounter {
   int count = 1;
@@ -44,19 +45,73 @@ Future<Uint8List> generateQuestionPaperPdf(
   String? maxMarks,
   String? subject,
   String? className,
+  String fontFamily = 'NotoSans',
   Map<String, String>? customFieldValues,
 }) async {
-  final font = await rootBundle.load('assets/times.ttf');
-  final boldFont = await rootBundle.load('assets/timesbd.ttf');
-  final italicFont = await rootBundle.load('assets/timesi.ttf');
-  final boldItalicFont = await rootBundle.load('assets/timesbi.ttf');
+  pw.Font font;
+  pw.Font boldFont;
+  pw.Font italicFont;
+  pw.Font boldItalicFont;
+  List<pw.Font> fontFallbacks = [];
 
-  final theme = pw.ThemeData.withFont(
-    base: pw.Font.ttf(font),
-    bold: pw.Font.ttf(boldFont),
-    italic: pw.Font.ttf(italicFont),
-    boldItalic: pw.Font.ttf(boldItalicFont),
-  ).copyWith(defaultTextStyle: const pw.TextStyle(fontSize: 12));
+  if (fontFamily == 'TimesNewRoman') {
+    font = pw.Font.ttf(await rootBundle.load('assets/times.ttf'));
+    boldFont = pw.Font.ttf(await rootBundle.load('assets/timesbd.ttf'));
+    italicFont = pw.Font.ttf(await rootBundle.load('assets/timesi.ttf'));
+    boldItalicFont = pw.Font.ttf(await rootBundle.load('assets/timesbi.ttf'));
+
+    // Even for Times, we should probably fallback to Noto for non-Latin chars
+    // But let's keep it strict if requested, or add fallbacks there too?
+    // Usually Times is strict. Let's add fallbacks only for Noto mode for now
+    // or add them to both if we want robustness.
+    // Let's add them to both for better UX.
+    try {
+      fontFallbacks.add(await PdfGoogleFonts.notoSansKannadaRegular());
+      fontFallbacks.add(await PdfGoogleFonts.notoSansTamilRegular());
+      fontFallbacks.add(await PdfGoogleFonts.notoSansDevanagariRegular());
+      fontFallbacks.add(await PdfGoogleFonts.notoSansBengaliRegular());
+      fontFallbacks.add(await PdfGoogleFonts.notoSansTeluguRegular());
+      fontFallbacks.add(await PdfGoogleFonts.notoSansMalayalamRegular());
+      fontFallbacks.add(await PdfGoogleFonts.notoSansGujaratiRegular());
+    } catch (e) {
+      // Fallback fonts failed to load (offline?), proceed without them
+      print('Error loading fallback fonts: $e');
+    }
+  } else {
+    // Default to NotoSans
+    font = await PdfGoogleFonts.notoSansRegular();
+    boldFont = await PdfGoogleFonts.notoSansBold();
+    italicFont = await PdfGoogleFonts.notoSansItalic();
+    boldItalicFont = await PdfGoogleFonts.notoSansBoldItalic();
+
+    // Load Fallback Fonts for Indic languages
+    try {
+      fontFallbacks.add(await PdfGoogleFonts.notoSansKannadaRegular());
+      fontFallbacks.add(await PdfGoogleFonts.notoSansTamilRegular());
+      fontFallbacks.add(await PdfGoogleFonts.notoSansDevanagariRegular());
+      fontFallbacks.add(await PdfGoogleFonts.notoSansBengaliRegular());
+      fontFallbacks.add(await PdfGoogleFonts.notoSansTeluguRegular());
+      fontFallbacks.add(await PdfGoogleFonts.notoSansMalayalamRegular());
+      fontFallbacks.add(await PdfGoogleFonts.notoSansGujaratiRegular());
+    } catch (e) {
+      // Fallback fonts failed to load (offline?), proceed without them
+      print('Error loading fallback fonts: $e');
+    }
+  }
+
+  final theme =
+      pw.ThemeData.withFont(
+        base: font,
+        bold: boldFont,
+        italic: italicFont,
+        boldItalic: boldItalicFont,
+        fontFallback: fontFallbacks,
+      ).copyWith(
+        defaultTextStyle: pw.TextStyle(
+          fontSize: 12,
+          fontFallback: fontFallbacks,
+        ),
+      );
 
   final pdf = pw.Document(theme: theme);
   final counter = QuestionCounter();

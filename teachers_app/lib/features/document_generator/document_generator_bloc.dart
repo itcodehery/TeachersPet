@@ -29,6 +29,7 @@ class DocumentGeneratorNotifier extends StateNotifier<DocumentGeneratorState> {
     String? maxMarks,
     String? subject,
     String? className,
+    String? fontFamily,
     Map<String, String>? customFieldValues,
   }) async {
     state = GeneratingDocument();
@@ -44,6 +45,7 @@ class DocumentGeneratorNotifier extends StateNotifier<DocumentGeneratorState> {
         maxMarks: maxMarks,
         subject: subject,
         className: className,
+        fontFamily: fontFamily ?? 'NotoSans',
         customFieldValues: customFieldValues,
       );
 

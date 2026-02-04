@@ -13,6 +13,7 @@ class FormBuilderNotifier extends StateNotifier<SavedForm> {
           lastModified: DateTime.now(),
           questions: [],
           selectedHeaderId: 'prebuilt_simple',
+          fontFamily: 'NotoSans',
         ),
       );
 
@@ -68,6 +69,13 @@ class FormBuilderNotifier extends StateNotifier<SavedForm> {
     );
   }
 
+  void updateFontFamily(String fontFamily) {
+    state = state.copyWith(
+      fontFamily: fontFamily,
+      lastModified: DateTime.now(),
+    );
+  }
+
   void updateFormDetails({
     String? name,
     String? instituteName,
@@ -103,6 +111,7 @@ class FormBuilderNotifier extends StateNotifier<SavedForm> {
       lastModified: DateTime.now(),
       questions: [],
       selectedHeaderId: 'prebuilt_simple',
+      fontFamily: 'NotoSans',
     );
   }
 }

@@ -147,6 +147,72 @@ class _GrammarSpellCheckDialogState
     }
   }
 
+  void _correctIndividualError(CheckResult result, TextError error) {
+    if (error.suggestion == null) return;
+
+    final notifier = ref.read(formBuilderProvider.notifier);
+    final form = ref.read(formBuilderProvider);
+
+    // 1. Apply correction to global form state
+    final correctedText = result.originalText.replaceRange(
+      error.offset,
+      error.offset + error.length,
+      error.suggestion!,
+    );
+    _applyCorrection(notifier, form, result, correctedText);
+
+    // 2. Update local state
+    final shift = error.suggestion!.length - error.length;
+    final resultIndex = _results.indexOf(result);
+
+    if (resultIndex != -1) {
+      // Create new list of spelling errors
+      final newSpellingErrors = result.spellingErrors
+          .where((e) => e != error) // Remove fixed error
+          .map((e) {
+            // Shift offsets for errors proceeding the fixed one
+            if (e.offset > error.offset) {
+              return e.copyWith(offset: e.offset + shift);
+            }
+            return e;
+          })
+          .toList();
+
+      // Create new list of grammar errors
+      final newGrammarErrors = result.grammarErrors
+          .where((e) => e != error) // Remove fixed error
+          .map((e) {
+            // Shift offsets for errors proceeding the fixed one
+            if (e.offset > error.offset) {
+              return e.copyWith(offset: e.offset + shift);
+            }
+            return e;
+          })
+          .toList();
+
+      final newResult = result.copyWith(
+        originalText: correctedText,
+        spellingErrors: newSpellingErrors,
+        grammarErrors: newGrammarErrors,
+      );
+
+      setState(() {
+        if (!newResult.hasErrors) {
+          _results.removeAt(resultIndex);
+        } else {
+          _results[resultIndex] = newResult;
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Fixed'),
+          duration: Duration(milliseconds: 1000),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -329,7 +395,7 @@ class _GrammarSpellCheckDialogState
                 .where((r) => r.spellingErrors.isNotEmpty)
                 .expand(
                   (r) => r.spellingErrors.map(
-                    (e) => _buildErrorCard(e, isSpelling: true),
+                    (e) => _buildErrorCard(e, r, isSpelling: true),
                   ),
                 ),
             const SizedBox(height: 16),
@@ -348,7 +414,7 @@ class _GrammarSpellCheckDialogState
                 .where((r) => r.grammarErrors.isNotEmpty)
                 .expand(
                   (r) => r.grammarErrors.map(
-                    (e) => _buildErrorCard(e, isSpelling: false),
+                    (e) => _buildErrorCard(e, r, isSpelling: false),
                   ),
                 ),
           ],
@@ -357,7 +423,11 @@ class _GrammarSpellCheckDialogState
     );
   }
 
-  Widget _buildErrorCard(TextError error, {required bool isSpelling}) {
+  Widget _buildErrorCard(
+    TextError error,
+    CheckResult result, {
+    required bool isSpelling,
+  }) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
@@ -414,6 +484,12 @@ class _GrammarSpellCheckDialogState
                 ],
               ),
             ),
+            if (error.suggestion != null)
+              IconButton(
+                onPressed: () => _correctIndividualError(result, error),
+                icon: const Icon(Icons.check, color: Colors.green),
+                tooltip: 'Fix',
+              ),
           ],
         ),
       ),

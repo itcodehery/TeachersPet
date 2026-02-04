@@ -176,8 +176,8 @@ class SettingsPage extends ConsumerWidget {
                       Expanded(
                         child: Slider(
                           value: accessibility.fontScale,
-                          min: 0.6,
-                          max: 1.4,
+                          min: 0.8,
+                          max: 1.3,
                           divisions: 8,
                           label: '${(accessibility.fontScale * 100).round()}%',
                           onChanged: (value) {
