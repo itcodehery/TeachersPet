@@ -153,8 +153,11 @@ class _FormSetupWizardScreenState extends ConsumerState<FormSetupWizardScreen> {
     }
     notifier.updateFontFamily(_selectedFontFamily);
 
-    // Replace wizard with editor
-    context.pushReplacement('/form-builder');
+    // Get the updated form from provider
+    final currentForm = ref.read(formBuilderProvider);
+
+    // Replace wizard with editor, passing the form to prevent reset
+    context.pushReplacement('/form-builder', extra: currentForm);
   }
 
   @override
