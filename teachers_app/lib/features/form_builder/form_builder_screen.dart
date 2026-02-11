@@ -20,6 +20,7 @@ import 'package:minty/widgets/app_snackbar.dart';
 import 'package:minty/features/form_builder/grammar_n_spellcheck/grammar_spell_check_dialog.dart';
 import 'dart:async';
 import 'package:minty/core/accessibility/accessibility_settings.dart';
+import 'package:minty/core/services/fullscreen_ad_service.dart';
 
 class FormBuilderScreen extends ConsumerStatefulWidget {
   final SavedForm? form;
@@ -33,10 +34,12 @@ class FormBuilderScreen extends ConsumerStatefulWidget {
 class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
   bool _isSpellChecking = false;
   Timer? _autoSaveTimer;
+  final FullscreenAdService _adService = FullscreenAdService();
 
   @override
   void initState() {
     super.initState();
+    _adService.loadAd();
     if (widget.form != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(formBuilderProvider.notifier).loadForm(widget.form!);
@@ -53,6 +56,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
   @override
   void dispose() {
     _autoSaveTimer?.cancel();
+    _adService.dispose();
     super.dispose();
   }
 
@@ -97,8 +101,6 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
         // or just quietly save it as a new draft?
         // Let's adopt the behavior: if it's a new form, we don't auto-save until manual save to avoid clutter
         // UNLESS we check if the user has already saved it once.
-        // For simplicity, let's only auto-save if we are editing an existing form (widget.form != null)
-        // OR if the user has manually saved it at least once (we'd need to track that).
         // A safer bet is: only auto-save if widget.form != null to avoid creating junk files.
         // BUT if users want auto-save on new forms, we should probably support it.
         // Let's stick to updating existing forms for now to be safe.
@@ -209,63 +211,70 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen> {
           builder: (context) => const AddQuestionSheet(),
         );
       },
-      'Export to PDF': (BuildContext context, WidgetRef ref) async {
+      'Export to PDF': (BuildContext context, WidgetRef ref) {
         if (form.questions.isEmpty) {
           AppSnackbar.showError(context, 'No questions to export!');
           return;
         }
-        final headerId = form.selectedHeaderId ?? 'prebuilt_simple';
-        final header = await HeaderTemplateService.getHeaderById(headerId);
-        ref
-            .read(documentGeneratorProvider.notifier)
-            .generateDocument(
-              form.questions,
-              headerTemplate: header,
-              instituteName: form.instituteName,
-              examTitle: form.examTitle,
-              subtitle: form.subtitle,
-              date: form.date,
-              duration: form.duration,
-              maxMarks: form.maxMarks,
-              subject: form.subject,
-              className: form.className,
-              fontFamily: form.fontFamily,
-              customFieldValues: form.customFieldValues,
-            );
+
+        _adService.showAdIfAvailable(() async {
+          final headerId = form.selectedHeaderId ?? 'prebuilt_simple';
+          final header = await HeaderTemplateService.getHeaderById(headerId);
+          ref
+              .read(documentGeneratorProvider.notifier)
+              .generateDocument(
+                form.questions,
+                headerTemplate: header,
+                instituteName: form.instituteName,
+                examTitle: form.examTitle,
+                subtitle: form.subtitle,
+                date: form.date,
+                duration: form.duration,
+                maxMarks: form.maxMarks,
+                subject: form.subject,
+                className: form.className,
+                fontFamily: form.fontFamily,
+                customFieldValues: form.customFieldValues,
+              );
+        });
       },
-      'Preview': (BuildContext context, WidgetRef ref) async {
+      'Preview': (BuildContext context, WidgetRef ref) {
         if (form.questions.isEmpty) {
           AppSnackbar.showError(context, 'No questions to preview!');
           return;
         }
 
-        AppSnackbar.showInfo(context, 'Generating preview...');
-        final headerId = form.selectedHeaderId ?? 'prebuilt_simple';
-        final header = await HeaderTemplateService.getHeaderById(headerId);
-        final pdfBytes = await generateQuestionPaperPdf(
-          form.questions,
-          headerTemplate: header,
-          instituteName: form.instituteName,
-          examTitle: form.examTitle,
-          subtitle: form.subtitle,
-          date: form.date,
-          duration: form.duration,
-          maxMarks: form.maxMarks,
-          subject: form.subject,
-          className: form.className,
-          fontFamily: form.fontFamily,
-          customFieldValues: form.customFieldValues,
-        );
+        _adService.showAdIfAvailable(() async {
+          AppSnackbar.showInfo(context, 'Generating preview...');
+          final headerId = form.selectedHeaderId ?? 'prebuilt_simple';
+          final header = await HeaderTemplateService.getHeaderById(headerId);
+          final pdfBytes = await generateQuestionPaperPdf(
+            form.questions,
+            headerTemplate: header,
+            instituteName: form.instituteName,
+            examTitle: form.examTitle,
+            subtitle: form.subtitle,
+            date: form.date,
+            duration: form.duration,
+            maxMarks: form.maxMarks,
+            subject: form.subject,
+            className: form.className,
+            fontFamily: form.fontFamily,
+            customFieldValues: form.customFieldValues,
+          );
 
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Scaffold(
-              appBar: AppBar(title: const Text('PDF Preview')),
-              body: PdfPreview(build: (format) => pdfBytes),
+          if (!context.mounted) return;
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Scaffold(
+                appBar: AppBar(title: const Text('PDF Preview')),
+                body: PdfPreview(build: (format) => pdfBytes),
+              ),
             ),
-          ),
-        );
+          );
+        });
       },
       'Reset Form': (BuildContext context, WidgetRef ref) {
         context.pop(); // Close split button menu
