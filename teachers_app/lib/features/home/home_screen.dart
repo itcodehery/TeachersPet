@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:minty/features/auth/domain/auth_state.dart';
 import 'package:minty/tips.dart';
 import 'package:minty/features/form_builder/saved_forms_service.dart';
+import 'package:minty/core/widgets/banner_ad_widget.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -206,6 +207,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               )
             else
               ..._recentForms.map((form) => _buildRecentFormTile(form)),
+            const SizedBox(height: 32),
+            const BannerAdWidget(),
           ],
         ),
       ),

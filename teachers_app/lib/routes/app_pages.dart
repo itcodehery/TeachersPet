@@ -1,5 +1,6 @@
 import 'package:minty/features/home/presentation/pages/home_page.dart';
 import 'package:minty/features/settings/settings_page.dart';
+import 'package:minty/features/settings/privacy_policy_page.dart';
 import 'package:minty/features/auth/presentation/pages/login_page.dart';
 import 'package:minty/features/auth/presentation/pages/signup_page.dart';
 import 'package:minty/features/auth/presentation/pages/forgot_password_page.dart';
@@ -53,6 +54,11 @@ final router = GoRouter(
       name: Names.settings,
       path: Routes.settings,
       builder: (context, state) => const SettingsPage(),
+    ),
+    GoRoute(
+      name: Names.privacyPolicy,
+      path: Routes.privacyPolicy,
+      builder: (context, state) => const PrivacyPolicyPage(),
     ),
     GoRoute(
       name: Names.forgotPassword,

@@ -4,6 +4,7 @@ abstract class Routes {
   static const formWizard = _Paths.formWizard;
   static const savedForms = _Paths.savedForms;
   static const settings = _Paths.settings;
+  static const privacyPolicy = _Paths.privacyPolicy;
   static const login = _Paths.login;
   static const signup = _Paths.signup;
   static const forgotPassword = _Paths.forgotPassword;
@@ -17,6 +18,7 @@ abstract class _Paths {
   static const formWizard = '/form-wizard';
   static const savedForms = '/saved-forms';
   static const settings = '/settings';
+  static const privacyPolicy = '/privacy-policy';
   static const login = '/login';
   static const signup = '/signup';
   static const forgotPassword = '/forgot-password';
@@ -30,6 +32,7 @@ abstract class _Names {
   static const formWizard = 'formWizard';
   static const savedForms = 'savedForms';
   static const settings = 'settings';
+  static const privacyPolicy = 'privacyPolicy';
   static const login = 'login';
   static const signup = 'signup';
   static const forgotPassword = 'forgotPassword';
@@ -43,6 +46,7 @@ abstract class Names {
   static const formWizard = _Names.formWizard;
   static const savedForms = _Names.savedForms;
   static const settings = _Names.settings;
+  static const privacyPolicy = _Names.privacyPolicy;
   static const login = _Names.login;
   static const signup = _Names.signup;
   static const forgotPassword = _Names.forgotPassword;

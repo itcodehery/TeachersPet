@@ -304,6 +304,49 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
+          // Legal Section
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              'Legal',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+              ),
+            ),
+            child: ListTile(
+              leading: Icon(
+                Icons.privacy_tip_outlined,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              title: Text(
+                'Privacy Policy',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              trailing: Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              ),
+              onTap: () {
+                context.push(Routes.privacyPolicy);
+              },
+            ),
+          ),
+          const SizedBox(height: 24),
           // Logout Button
           Card(
             shape: RoundedRectangleBorder(
